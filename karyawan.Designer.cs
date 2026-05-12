@@ -168,7 +168,7 @@
             this.Controls.Add(this.btnKembali);
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "karyawan";
-            this.Text = "CekRutin";
+            this.Text = "q";
             this.Load += new System.EventHandler(this.karyawan_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.ResumeLayout(false);
