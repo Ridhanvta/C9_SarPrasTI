@@ -93,6 +93,7 @@ namespace ManajemenSarPras
                         cmbGedung.DataSource = dt;
                         cmbGedung.DisplayMember = "namaGedung";
                         cmbGedung.ValueMember = "idGedung";
+                        cmbGedung.DropDownStyle = ComboBoxStyle.DropDownList;
                     }
                 }
             }
@@ -108,6 +109,7 @@ namespace ManajemenSarPras
                 cmbRuangan.Items.Add("-- Pilih Ruangan --");
                 cmbRuangan.SelectedIndex = 0;
                 cmbRuangan.Enabled = false;
+                cmbRuangan.DropDownStyle = ComboBoxStyle.DropDownList;
                 return;
             }
 
@@ -134,6 +136,7 @@ namespace ManajemenSarPras
                             cmbRuangan.DataSource = dt;
                             cmbRuangan.DisplayMember = "namaRuangan";
                             cmbRuangan.ValueMember = "idRuangan";
+                            cmbRuangan.DropDownStyle = ComboBoxStyle.DropDownList;
                             cmbRuangan.Enabled = true;
                         }
                     }

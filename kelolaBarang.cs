@@ -54,6 +54,7 @@ namespace ManajemenSarPras
             cmbTipeBarang.DataSource = dtTipe;
             cmbTipeBarang.DisplayMember = "Display";
             cmbTipeBarang.ValueMember = "Value";
+            cmbTipeBarang.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbTipeBarang.SelectedIndex = -1;
 
             LoadComboMerk();

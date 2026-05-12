@@ -1,4 +1,4 @@
-﻿using SatprasDesktopApp.Config; // Pastikan namespace ini sesuai
+﻿using SatprasDesktopApp.Config;
 using System;
 using System.Data;
 using System.Data.SqlClient;
@@ -8,20 +8,13 @@ namespace ManajemenSarPras
 {
     public partial class karyawan : Form
     {
-        // ==========================================================
-        // VARIABEL GLOBAL PENGENDALI STATE
-        // ==========================================================
         private bool isEditMode = false;
         private string originalIdKaryawan = "";
 
         public karyawan()
         {
             InitializeComponent();
-
-            // PELAJARAN DARI BUG SEBELUMNYA:
-            // Kita TIDAK mengaitkan event tombol (Click) di sini karena Visual Studio 
-            // sudah mengaitkannya secara otomatis di file .designer.cs.
-            // Memasang kabel lagi di sini hanya akan memicu pesan error ganda!
+            this.richTextBox3.KeyPress += new KeyPressEventHandler(richTextBox3_KeyPress);
         }
 
         private void btnKembali_Click(object sender, EventArgs e)
@@ -31,13 +24,18 @@ namespace ManajemenSarPras
             this.Hide();
         }
 
-        // ==========================================================
-        // FASE 1: LOAD DATA & STATE MANAGEMENT
-        // ==========================================================
         private void karyawan_Load(object sender, EventArgs e)
         {
             LoadDataKaryawan();
             ResetForm();
+        }
+
+        private void richTextBox3_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsLetter(e.KeyChar) && !char.IsControl(e.KeyChar) && !char.IsWhiteSpace(e.KeyChar))
+            {
+                e.Handled = true;
+            }
         }
 
         private void LoadDataKaryawan(string keyword = "")
@@ -65,7 +63,6 @@ namespace ManajemenSarPras
                             dataGridView1.DataSource = dt;
                             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
-                            // Sembunyikan ID agar UI lebih bersih dan elegan
                             if (dataGridView1.Columns["ID"] != null) dataGridView1.Columns["ID"].Visible = false;
                         }
                     }
@@ -76,30 +73,23 @@ namespace ManajemenSarPras
 
         private void ResetForm()
         {
-            richTextBox3.Clear(); // Kotak input Nama Karyawan
+            richTextBox3.Clear();
 
             isEditMode = false;
             originalIdKaryawan = "";
 
-            // MENGUBAH TEKS TOMBOL SECARA DINAMIS (State Machine)
             btnTambah.Text = "Simpan Data Baru";
             btnUpdate.Text = "Reset Text";
 
-            btnDelete.Enabled = false; // Matikan tombol hapus saat mode tambah data
+            btnDelete.Enabled = false;
             richTextBox3.Focus();
         }
 
-        // ==========================================================
-        // FASE 2: INTERAKSI UI & ROUTING TOMBOL
-        // ==========================================================
-
-        // FUNGSI INI SEKARANG BERTUGAS SEBAGAI TOMBOL RESET (Behavior Repurposing)
         private void btnUpdate_Click(object sender, EventArgs e)
         {
             ResetForm();
         }
 
-        // Event ini dipicu oleh richTextBox1 (Kotak Pencarian)
         private void txtCari_TextChanged(object sender, EventArgs e)
         {
             LoadDataKaryawan(richTextBox1.Text.Trim());
@@ -107,7 +97,6 @@ namespace ManajemenSarPras
 
         private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            // BUG FIX: Menggunakan >= 0 agar semua baris (bukan cuma baris pertama) bisa diklik
             if (e.RowIndex >= 0)
             {
                 DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
@@ -117,15 +106,11 @@ namespace ManajemenSarPras
 
                 isEditMode = true;
 
-                // MENGUBAH TEKS TOMBOL SECARA DINAMIS
                 btnTambah.Text = "Update Data";
-                btnDelete.Enabled = true; // Nyalakan tombol hapus karena data sudah terpilih
+                btnDelete.Enabled = true;
             }
         }
 
-        // ==========================================================
-        // FASE 3: MESIN DATABASE (CRUD ROUTER PADA TOMBOL TAMBAH)
-        // ==========================================================
         private void btnTambah_Click(object sender, EventArgs e)
         {
             string inputNama = richTextBox3.Text.Trim();
@@ -143,7 +128,6 @@ namespace ManajemenSarPras
                 {
                     if (conn == null) return;
 
-                    // CEK DUPLIKASI DATA KARYAWAN
                     string checkQuery = isEditMode
                         ? "SELECT COUNT(1) FROM master.karyawan WHERE namaKaryawan = @nama AND idKaryawan != @id"
                         : "SELECT COUNT(1) FROM master.karyawan WHERE namaKaryawan = @nama";
@@ -160,7 +144,6 @@ namespace ManajemenSarPras
                         }
                     }
 
-                    // EKSEKUSI INSERT ATAU UPDATE
                     string query = isEditMode
                         ? "UPDATE master.karyawan SET namaKaryawan = @nama WHERE idKaryawan = @id"
                         : "INSERT INTO master.karyawan (namaKaryawan) VALUES (@nama)";
@@ -207,7 +190,6 @@ namespace ManajemenSarPras
                 }
                 catch (SqlException sqlEx)
                 {
-                    // PROTEKSI FOREIGN KEY (Karyawan melakukan Maintenance)
                     if (sqlEx.Number == 547)
                     {
                         MessageBox.Show("PEMBERHENTIAN DITOLAK!\n\nKaryawan ini masih tercatat sebagai penanggung jawab dalam riwayat Pengecekan Rutin/Maintenance. Data karyawan yang memiliki jejak historis operasional tidak boleh dihapus dari sistem.", "Integritas Data Aktif", MessageBoxButtons.OK, MessageBoxIcon.Error);

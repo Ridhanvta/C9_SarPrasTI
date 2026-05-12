@@ -29,6 +29,9 @@ namespace ManajemenSarPras
 
             this.textBox2.TextChanged += new EventHandler(textBox2_TextChanged);
             this.textBox1.TextChanged += new EventHandler(textBox1_TextChanged);
+
+            this.txtNma.KeyPress += new KeyPressEventHandler(txtNma_KeyPress);
+            this.txtJmlh.KeyPress += new KeyPressEventHandler(txtJmlh_KeyPress);
         }
 
         private void btnKembali_Click(object sender, EventArgs e)
@@ -40,10 +43,36 @@ namespace ManajemenSarPras
 
         private void permintaanBarang_Load(object sender, EventArgs e)
         {
+            foreach (Control ctrl in this.Controls)
+            {
+                if (ctrl is DateTimePicker dtp)
+                {
+                    dtp.MinDate = DateTime.Today;
+                    dtp.MaxDate = DateTime.Today;
+                    dtp.Value = DateTime.Today;
+                }
+            }
+
             LoadComboRuangan();
             LoadComboSemester();
             RefreshSemuaTabel();
             ResetForm();
+        }
+
+        private void txtNma_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsLetter(e.KeyChar) && !char.IsControl(e.KeyChar) && !char.IsWhiteSpace(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void txtJmlh_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+            {
+                e.Handled = true;
+            }
         }
 
         private void LoadComboRuangan()
@@ -61,6 +90,7 @@ namespace ManajemenSarPras
                         cmbRuangan.DataSource = dt;
                         cmbRuangan.DisplayMember = "namaRuangan";
                         cmbRuangan.ValueMember = "idRuangan";
+                        cmbRuangan.DropDownStyle = ComboBoxStyle.DropDownList;
                         cmbRuangan.SelectedIndex = -1;
                     }
                 }
@@ -75,7 +105,9 @@ namespace ManajemenSarPras
                 using (var conn = DatabaseConfig.GetConnection())
                 {
                     if (conn == null) return;
-                    string query = "SELECT idSemester, tahunAjaran FROM [master].[semester]";
+
+                    string query = "SELECT idSemester, tahunAjaran FROM [master].[semester] WHERE tahunAjaran LIKE '%' + CAST(YEAR(GETDATE()) AS VARCHAR) + '%'";
+
                     using (SqlDataAdapter da = new SqlDataAdapter(query, conn))
                     {
                         DataTable dt = new DataTable();
@@ -83,6 +115,7 @@ namespace ManajemenSarPras
                         cmbSemester.DataSource = dt;
                         cmbSemester.DisplayMember = "tahunAjaran";
                         cmbSemester.ValueMember = "idSemester";
+                        cmbSemester.DropDownStyle = ComboBoxStyle.DropDownList;
                         cmbSemester.SelectedIndex = -1;
                     }
                 }

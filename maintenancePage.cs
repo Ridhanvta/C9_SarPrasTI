@@ -41,6 +41,16 @@ namespace ManajemenSarPras
 
         private void maintenancePage_Load(object sender, EventArgs e)
         {
+            foreach (Control ctrl in this.Controls)
+            {
+                if (ctrl is DateTimePicker dtp)
+                {
+                    dtp.MinDate = DateTime.Today;
+                    dtp.MaxDate = DateTime.Today;
+                    dtp.Value = DateTime.Today;
+                }
+            }
+
             LoadComboSemester();
             LoadComboKaryawan();
             RefreshSemuaTabel();
@@ -62,6 +72,7 @@ namespace ManajemenSarPras
                         cmbKaryawan.DataSource = dt;
                         cmbKaryawan.DisplayMember = "namaKaryawan";
                         cmbKaryawan.ValueMember = "idKaryawan";
+                        cmbKaryawan.DropDownStyle = ComboBoxStyle.DropDownList;
                         cmbKaryawan.SelectedIndex = -1;
                     }
                 }
@@ -76,7 +87,9 @@ namespace ManajemenSarPras
                 using (var conn = DatabaseConfig.GetConnection())
                 {
                     if (conn == null) return;
-                    string query = "SELECT idSemester, tahunAjaran FROM [master].[semester]";
+
+                    string query = "SELECT idSemester, tahunAjaran FROM [master].[semester] WHERE tahunAjaran LIKE '%' + CAST(YEAR(GETDATE()) AS VARCHAR) + '%'";
+
                     using (SqlDataAdapter da = new SqlDataAdapter(query, conn))
                     {
                         DataTable dt = new DataTable();
@@ -84,6 +97,7 @@ namespace ManajemenSarPras
                         cmbSemester.DataSource = dt;
                         cmbSemester.DisplayMember = "tahunAjaran";
                         cmbSemester.ValueMember = "idSemester";
+                        cmbSemester.DropDownStyle = ComboBoxStyle.DropDownList;
                         cmbSemester.SelectedIndex = -1;
                     }
                 }
