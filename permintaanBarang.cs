@@ -154,6 +154,17 @@ namespace ManajemenSarPras
             catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Barang", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
+        private BindingSource navBindingSource = new BindingSource();
+        private DataTable dtTransaksi = new DataTable();
+
+        private void BindControls()
+        {
+            txtNma.DataBindings.Clear();
+            txtJmlh.DataBindings.Clear();
+
+            txtNma.DataBindings.Add("Text", navBindingSource, "Peminta");
+            txtJmlh.DataBindings.Add("Text", navBindingSource, "Qty");
+        }
         private void LoadDataTransaksi(string keyword = "")
         {
             try
@@ -167,22 +178,20 @@ namespace ManajemenSarPras
 
                     if (!string.IsNullOrEmpty(keyword))
                     {
-                        query += " AND (b.namaBarang LIKE @kw OR p.namaPeminta LIKE @kw OR r.namaRuangan LIKE @kw OR p.idPermintaanBarang LIKE @kw)";
+                        query += " WHERE [Barang] LIKE @kw OR [Peminta] LIKE @kw";
                     }
 
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    using (SqlDataAdapter da = new SqlDataAdapter(query, conn))
                     {
-                        if (!string.IsNullOrEmpty(keyword)) cmd.Parameters.AddWithValue("@kw", "%" + keyword + "%");
+                        da.SelectCommand.Parameters.AddWithValue("@kw", "%" + keyword + "%");
+                        dtTransaksi = new DataTable();
+                        da.Fill(dtTransaksi);
 
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            DataTable dt = new DataTable();
-                            da.Fill(dt);
-                            dataGridView2.DataSource = dt;
+                        navBindingSource.DataSource = dtTransaksi;
+                        dataGridView2.DataSource = navBindingSource;
+                        bindingNavigator1.BindingSource = navBindingSource;
 
-                            if (dataGridView2.Columns["idRuangan"] != null) dataGridView2.Columns["idRuangan"].Visible = false;
-                            if (dataGridView2.Columns["idSemester"] != null) dataGridView2.Columns["idSemester"].Visible = false;
-                        }
+                        BindControls();
                     }
                 }
             }
