@@ -13,6 +13,9 @@ namespace ManajemenSarPras
         private string originalIdDetail = "";
         private string originalIdBarang = "";
 
+        private BindingSource bsDetail = new BindingSource();
+        private bool isBindingApplied = false;
+
         public FormDetailBarang()
         {
             InitializeComponent();
@@ -24,6 +27,14 @@ namespace ManajemenSarPras
             this.btnSimpan.Click += new EventHandler(btnSimpan_Click);
             this.btnBatal.Click += new EventHandler(btnBatal_Click);
             this.btnHapus.Click += new EventHandler(btnHapus_Click);
+
+            this.bsDetail.PositionChanged += new EventHandler(bsDetail_PositionChanged);
+
+            if (this.Controls.ContainsKey("btnTestSQL"))
+                this.Controls["btnTestSQL"].Click += new EventHandler(btnTestSQL_Click);
+
+            if (this.Controls.ContainsKey("btnRestoreData"))
+                this.Controls["btnRestoreData"].Click += new EventHandler(btnRestoreData_Click);
         }
 
         private void btnKembali_Click(object sender, EventArgs e)
@@ -35,10 +46,61 @@ namespace ManajemenSarPras
 
         private void FormDetailBarang_Load(object sender, EventArgs e)
         {
+            if (this.Controls.ContainsKey("bindingNavigator1"))
+            {
+                BindingNavigator bn = (BindingNavigator)this.Controls["bindingNavigator1"];
+                bn.BindingSource = bsDetail;
+            }
+
             LoadComboBoxBarang();
             LoadComboBoxGedung();
             LoadDataDetail();
             ResetForm();
+        }
+
+        private void btnTestSQL_Click(object sender, EventArgs e)
+        {
+            string payload = "Bocor%' OR 1=1 --";
+            RunSQLInjectionDemo(payload);
+        }
+
+        private void btnRestoreData_Click(object sender, EventArgs e)
+        {
+            txtCari.Clear();
+            LoadDataDetail();
+            MessageBox.Show("Sistem kembali menggunakan arsitektur Parameterized Query yang 100% Kebal SQL Injection.", "Sistem Dipulihkan", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void RunSQLInjectionDemo(string payload)
+        {
+            try
+            {
+                using (var conn = DatabaseConfig.GetConnection())
+                {
+                    if (conn == null) return;
+
+                    string vulnerableQuery = "SELECT * FROM [transaction].vw_DataDetailBarang WHERE [Spesifikasi] LIKE '%" + payload + "%'";
+
+                    using (var cmd = new SqlCommand(vulnerableQuery, conn))
+                    {
+                        using (var da = new SqlDataAdapter(cmd))
+                        {
+                            DataTable dt = new DataTable();
+                            da.Fill(dt);
+
+                            dgvDetail.DataSource = null;
+                            dgvDetail.Columns.Clear();
+                            dgvDetail.DataSource = dt;
+
+                            MessageBox.Show("Payload otomatis disuntikkan: " + payload + "\n\nQuery yang dieksekusi Server:\n" + vulnerableQuery, "SQL Injection Tembus", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Server SQL memberikan respon Error:\n\n" + ex.Message, "SQL Injection Berhasil Mengganggu Server", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void LoadComboBoxBarang()
@@ -55,7 +117,7 @@ namespace ManajemenSarPras
                         da.Fill(dt);
 
                         DataRow dr = dt.NewRow();
-                        dr["idBarang"] = 0;
+                        dr["idBarang"] = "0";
                         dr["namaBarang"] = "-- Ketik atau Pilih Aset Tetap --";
                         dt.Rows.InsertAt(dr, 0);
 
@@ -163,24 +225,11 @@ namespace ManajemenSarPras
                 {
                     if (conn == null) return;
 
-                    string query = @"
-                        SELECT 
-                            db.idDetailBarang AS [ID Detail],
-                            b.namaBarang AS [Nama Aset],
-                            m.namaMerk AS [Merk],
-                            db.spesifikasi AS [Spesifikasi],
-                            g.namaGedung AS [Gedung],
-                            r.namaRuangan AS [Lokasi Ruangan],
-                            b.idBarang, g.idGedung, r.idRuangan
-                        FROM [transaction].detailBarang db
-                        LEFT JOIN [master].barang b ON db.idBarang = b.idBarang
-                        LEFT JOIN [master].merk m ON b.idMerk = m.idMerk 
-                        LEFT JOIN [master].ruangan r ON db.idRuangan = r.idRuangan
-                        LEFT JOIN [master].gedung g ON r.idGedung = g.idGedung";
+                    string query = "SELECT * FROM [transaction].vw_DataDetailBarang";
 
                     if (!string.IsNullOrEmpty(keyword))
                     {
-                        query += " WHERE b.namaBarang LIKE @kw OR db.idDetailBarang LIKE @kw OR db.spesifikasi LIKE @kw OR m.namaMerk LIKE @kw";
+                        query += " WHERE [Nama Aset] LIKE @kw OR [ID Detail] LIKE @kw OR [Spesifikasi] LIKE @kw OR [Merk] LIKE @kw";
                     }
 
                     using (var cmd = new SqlCommand(query, conn))
@@ -192,14 +241,22 @@ namespace ManajemenSarPras
                             DataTable dt = new DataTable();
                             da.Fill(dt);
 
+                            bsDetail.DataSource = dt;
+
                             dgvDetail.DataSource = null;
                             dgvDetail.Columns.Clear();
                             dgvDetail.AutoGenerateColumns = true;
-                            dgvDetail.DataSource = dt;
+                            dgvDetail.DataSource = bsDetail;
 
                             if (dgvDetail.Columns["idBarang"] != null) dgvDetail.Columns["idBarang"].Visible = false;
                             if (dgvDetail.Columns["idGedung"] != null) dgvDetail.Columns["idGedung"].Visible = false;
                             if (dgvDetail.Columns["idRuangan"] != null) dgvDetail.Columns["idRuangan"].Visible = false;
+
+                            if (!isBindingApplied && dt.Rows.Count > 0)
+                            {
+                                ApplySmartBindings();
+                                isBindingApplied = true;
+                            }
                         }
                     }
                 }
@@ -207,8 +264,54 @@ namespace ManajemenSarPras
             catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
 
+        private void ApplySmartBindings()
+        {
+            txtIdDetail.DataBindings.Clear();
+            txtSpesifikasi.DataBindings.Clear();
+            cmbBarang.DataBindings.Clear();
+            cmbGedung.DataBindings.Clear();
+            cmbRuangan.DataBindings.Clear();
+
+            txtIdDetail.DataBindings.Add("Text", bsDetail, "ID Detail", true, DataSourceUpdateMode.Never);
+            txtSpesifikasi.DataBindings.Add("Text", bsDetail, "Spesifikasi", true, DataSourceUpdateMode.Never);
+
+            cmbBarang.DataBindings.Add("SelectedValue", bsDetail, "idBarang", true, DataSourceUpdateMode.Never);
+            cmbGedung.DataBindings.Add("SelectedValue", bsDetail, "idGedung", true, DataSourceUpdateMode.Never);
+
+            Binding bindRuangan = new Binding("SelectedValue", bsDetail, "idRuangan", true, DataSourceUpdateMode.Never);
+            bindRuangan.Format += (s, e) => { cmbRuangan.Enabled = true; };
+            cmbRuangan.DataBindings.Add(bindRuangan);
+        }
+
+        private void bsDetail_PositionChanged(object sender, EventArgs e)
+        {
+            if (!isBindingApplied || bsDetail.Position < 0 || bsDetail.Current == null) return;
+
+            DataRowView row = (DataRowView)bsDetail.Current;
+
+            originalIdDetail = row["ID Detail"].ToString();
+            originalIdBarang = row["idBarang"].ToString();
+
+            txtIdDetail.ReadOnly = true;
+            cmbBarang.Enabled = false;
+
+            isEditMode = true;
+            btnSimpan.Text = "Update Data";
+            btnHapus.Enabled = true;
+        }
+
+        private void dgvDetail_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                bsDetail_PositionChanged(sender, e);
+            }
+        }
+
         private void ResetForm()
         {
+            bsDetail.SuspendBinding();
+
             txtIdDetail.Clear();
             txtSpesifikasi.Clear();
 
@@ -218,6 +321,11 @@ namespace ManajemenSarPras
             if (cmbBarang.Items.Count > 0) cmbBarang.SelectedIndex = 0;
 
             if (cmbGedung.Items.Count > 0) cmbGedung.SelectedIndex = 0;
+
+            cmbRuangan.DataSource = null;
+            cmbRuangan.Items.Clear();
+            cmbRuangan.Items.Add("-- Pilih Ruangan --");
+            cmbRuangan.SelectedIndex = 0;
             cmbRuangan.Enabled = false;
 
             isEditMode = false;
@@ -227,6 +335,8 @@ namespace ManajemenSarPras
             btnSimpan.Text = "Tambah Detail Barang";
             btnHapus.Enabled = false;
             txtIdDetail.Focus();
+
+            bsDetail.ResumeBinding();
         }
 
         private void btnBatal_Click(object sender, EventArgs e)
@@ -237,32 +347,6 @@ namespace ManajemenSarPras
         private void txtCari_TextChanged(object sender, EventArgs e)
         {
             LoadDataDetail(txtCari.Text.Trim());
-        }
-
-        private void dgvDetail_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex >= 0)
-            {
-                DataGridViewRow row = dgvDetail.Rows[e.RowIndex];
-
-                originalIdDetail = row.Cells["ID Detail"].Value.ToString();
-                txtIdDetail.Text = originalIdDetail;
-                txtSpesifikasi.Text = row.Cells["Spesifikasi"].Value.ToString();
-
-                originalIdBarang = row.Cells["idBarang"].Value.ToString();
-                cmbBarang.SelectedValue = Convert.ToInt32(originalIdBarang);
-
-                cmbGedung.SelectedValue = Convert.ToInt32(row.Cells["idGedung"].Value);
-                cmbRuangan.SelectedValue = Convert.ToInt32(row.Cells["idRuangan"].Value);
-
-                txtIdDetail.ReadOnly = true;
-
-                cmbBarang.Enabled = false;
-
-                isEditMode = true;
-                btnSimpan.Text = "Update Data";
-                btnHapus.Enabled = true;
-            }
         }
 
         private void btnSimpan_Click(object sender, EventArgs e)
@@ -284,20 +368,9 @@ namespace ManajemenSarPras
 
                     try
                     {
-                        if (isEditMode)
+                        if (!isEditMode)
                         {
-                            string qUpdate = "UPDATE [transaction].detailBarang SET idRuangan = @ruang, spesifikasi = @spec WHERE idDetailBarang = @idAsli";
-                            using (var cmd = new SqlCommand(qUpdate, conn, transaction))
-                            {
-                                cmd.Parameters.AddWithValue("@ruang", Convert.ToInt32(cmbRuangan.SelectedValue));
-                                cmd.Parameters.AddWithValue("@spec", txtSpesifikasi.Text.Trim());
-                                cmd.Parameters.AddWithValue("@idAsli", originalIdDetail);
-                                cmd.ExecuteNonQuery();
-                            }
-                        }
-                        else
-                        {
-                            string qCheck = "SELECT COUNT(1) FROM [transaction].detailBarang WHERE idDetailBarang = @id";
+                            string qCheck = "SELECT COUNT(1) FROM [transaction].vw_DataDetailBarang WHERE [ID Detail] = @id";
                             using (var cmdCheck = new SqlCommand(qCheck, conn, transaction))
                             {
                                 cmdCheck.Parameters.AddWithValue("@id", txtIdDetail.Text.Trim());
@@ -306,28 +379,35 @@ namespace ManajemenSarPras
                                     throw new Exception("ID Detail sudah terpakai!");
                                 }
                             }
+                        }
 
-                            string qInsert = "INSERT INTO [transaction].detailBarang (idDetailBarang, idBarang, idRuangan, spesifikasi) VALUES (@id, @barang, @ruang, @spec)";
-                            using (var cmdIn = new SqlCommand(qInsert, conn, transaction))
+                        string spName = isEditMode ? "[transaction].sp_UpdateDetailBarang" : "[transaction].sp_InsertDetailBarang";
+
+                        using (var cmd = new SqlCommand(spName, conn, transaction))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+
+                            if (isEditMode)
                             {
-                                cmdIn.Parameters.AddWithValue("@id", txtIdDetail.Text.Trim());
-                                cmdIn.Parameters.AddWithValue("@barang", Convert.ToInt32(cmbBarang.SelectedValue));
-                                cmdIn.Parameters.AddWithValue("@ruang", Convert.ToInt32(cmbRuangan.SelectedValue));
-                                cmdIn.Parameters.AddWithValue("@spec", txtSpesifikasi.Text.Trim());
-                                cmdIn.ExecuteNonQuery();
+                                cmd.Parameters.AddWithValue("@idAsli", originalIdDetail);
+                                cmd.Parameters.AddWithValue("@idRuangan", Convert.ToInt32(cmbRuangan.SelectedValue));
+                                cmd.Parameters.AddWithValue("@spesifikasi", txtSpesifikasi.Text.Trim());
+                            }
+                            else
+                            {
+                                cmd.Parameters.AddWithValue("@idDetailBarang", txtIdDetail.Text.Trim());
+                                cmd.Parameters.AddWithValue("@idBarang", cmbBarang.SelectedValue.ToString());
+                                cmd.Parameters.AddWithValue("@idRuangan", Convert.ToInt32(cmbRuangan.SelectedValue));
+                                cmd.Parameters.AddWithValue("@spesifikasi", txtSpesifikasi.Text.Trim());
                             }
 
-                            string qStock = "UPDATE master.barang SET stok = stok + 1 WHERE idBarang = @barang";
-                            using (var cmdStok = new SqlCommand(qStock, conn, transaction))
-                            {
-                                cmdStok.Parameters.AddWithValue("@barang", Convert.ToInt32(cmbBarang.SelectedValue));
-                                cmdStok.ExecuteNonQuery();
-                            }
+                            cmd.ExecuteNonQuery();
                         }
 
                         transaction.Commit();
                         MessageBox.Show("Proses berhasil!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
+                        isBindingApplied = false;
                         LoadDataDetail();
                         ResetForm();
                     }
@@ -356,22 +436,18 @@ namespace ManajemenSarPras
 
                         try
                         {
-                            string qStock = "UPDATE master.barang SET stok = stok - 1 WHERE idBarang = @barang";
-                            using (var cmdStok = new SqlCommand(qStock, conn, transaction))
+                            using (var cmd = new SqlCommand("[transaction].sp_DeleteDetailBarang", conn, transaction))
                             {
-                                cmdStok.Parameters.AddWithValue("@barang", originalIdBarang);
-                                cmdStok.ExecuteNonQuery();
-                            }
-
-                            string qDel = "DELETE FROM [transaction].detailBarang WHERE idDetailBarang = @id";
-                            using (var cmdDel = new SqlCommand(qDel, conn, transaction))
-                            {
-                                cmdDel.Parameters.AddWithValue("@id", originalIdDetail);
-                                cmdDel.ExecuteNonQuery();
+                                cmd.CommandType = CommandType.StoredProcedure;
+                                cmd.Parameters.AddWithValue("@idDetailBarang", originalIdDetail);
+                                cmd.Parameters.AddWithValue("@idBarang", originalIdBarang);
+                                cmd.ExecuteNonQuery();
                             }
 
                             transaction.Commit();
                             MessageBox.Show("Data terhapus.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                            isBindingApplied = false;
                             LoadDataDetail();
                             ResetForm();
                         }
