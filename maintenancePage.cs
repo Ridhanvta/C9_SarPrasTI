@@ -105,6 +105,27 @@ namespace ManajemenSarPras
             catch (Exception ex) { MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
+        private void BindBarangControls()
+        {
+            txtKerusakan.DataBindings.Clear();
+            txtTindakLanjut.DataBindings.Clear();
+            cmbDetailBarang.DataBindings.Clear();
+            cmbKaryawan.DataBindings.Clear();
+            cmbRuangan.DataBindings.Clear();
+            cmbSemester.DataBindings.Clear();
+
+            txtKerusakan.DataBindings.Add("Text", bsMaintenance, "Kerusakan Barang");
+            txtTindakLanjut.DataBindings.Add("Text", bsMaintenance, "Tindak Lanjut");
+
+            cmbDetailBarang.DataBindings.Add("Text", bsMaintenance, "Aset");
+            cmbRuangan.DataBindings.Add("Text", bsMaintenance, "Lokasi");
+
+            cmbKaryawan.DataBindings.Add("SelectedValue", bsMaintenance, "idKaryawan");
+            cmbSemester.DataBindings.Add("SelectedValue", bsMaintenance, "idSemester");
+        }
+
+        private BindingSource bsBarang = new BindingSource();
+        private DataTable dtBarang = new DataTable();
         private void LoadDataBarang(string keyword = "")
         {
             try
@@ -114,15 +135,7 @@ namespace ManajemenSarPras
                     if (conn == null) return;
 
                     string query = @"
-                        SELECT 
-                            db.idDetailBarang AS [ID Detail], 
-                            b.idBarang,
-                            b.namaBarang AS [Aset], 
-                            db.spesifikasi AS [Spesifikasi], 
-                            r.namaRuangan AS [Lokasi]
-                        FROM [transaction].[detailBarang] db
-                        JOIN [master].[barang] b ON db.idBarang = b.idBarang
-                        JOIN [master].[ruangan] r ON db.idRuangan = r.idRuangan";
+                        SELECT * FROM [dbo].[vwDetailBarangAsset]";
 
                     if (!string.IsNullOrEmpty(keyword))
                     {
@@ -135,11 +148,19 @@ namespace ManajemenSarPras
 
                         using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                         {
-                            DataTable dt = new DataTable();
-                            da.Fill(dt);
-                            dataGridView2.DataSource = dt;
+                            dtBarang = new DataTable();
+                            da.Fill(dtBarang);
 
-                            if (dataGridView2.Columns["idBarang"] != null) dataGridView2.Columns["idBarang"].Visible = false;
+                            bsBarang.DataSource = dtBarang;
+
+                            dataGridView2.DataSource = bsBarang;
+                            bindingNavigator1.BindingSource = bsBarang;
+
+                            // buat nyembunyiin ID yang nggak perlu diliat user tapi penting buat kodingan
+                            if (dataGridView2.Columns["idBarang"] != null)
+                                dataGridView2.Columns["idBarang"].Visible = false;
+
+                            BindBarangControls();
                         }
                     }
                 }
