@@ -82,7 +82,8 @@ namespace ManajemenSarPras
                 using (var conn = DatabaseConfig.GetConnection())
                 {
                     if (conn == null) return;
-                    string query = "SELECT idRuangan, namaRuangan FROM [master].[ruangan]";
+
+                    string query = "SELECT * FROM [dbo].[vwDaftarRuangan]";
                     using (SqlDataAdapter da = new SqlDataAdapter(query, conn))
                     {
                         DataTable dt = new DataTable();
@@ -106,7 +107,7 @@ namespace ManajemenSarPras
                 {
                     if (conn == null) return;
 
-                    string query = "SELECT idSemester, tahunAjaran FROM [master].[semester] WHERE tahunAjaran LIKE '%' + CAST(YEAR(GETDATE()) AS VARCHAR) + '%'";
+                    string query = "SELECT * FROM [dbo].[vwSemesterAktif]";
 
                     using (SqlDataAdapter da = new SqlDataAdapter(query, conn))
                     {
@@ -131,11 +132,11 @@ namespace ManajemenSarPras
                 {
                     if (conn == null) return;
 
-                    string query = "SELECT idBarang AS [ID], namaBarang AS [Nama], stok AS [Stok] FROM [master].[barang] WHERE tipeBarang = 0";
+                    string query = "SELECT * FROM [dbo].[vwKatalogBarang]";
 
                     if (!string.IsNullOrEmpty(keyword))
                     {
-                        query += " AND (namaBarang LIKE @kw OR idBarang LIKE @kw)";
+                        query += " WHERE ([Nama] LIKE @kw OR [ID] LIKE @kw)";
                     }
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -271,22 +272,27 @@ namespace ManajemenSarPras
 
         private int CekStokAktual(SqlConnection conn, SqlTransaction trans, string idBarang)
         {
-            string query = "SELECT stok FROM [master].[barang] WHERE idBarang = @id";
+            string query = "SELECT stok FROM [dbo].[vwStokAktual] WHERE idBarang = @id";
+
             using (SqlCommand cmd = new SqlCommand(query, conn, trans))
             {
                 cmd.Parameters.AddWithValue("@id", idBarang);
                 object result = cmd.ExecuteScalar();
+
+                // mengembalikan 0 jika data tidak ditemukan
                 return result != null ? Convert.ToInt32(result) : 0;
             }
         }
 
         private void UpdateStokSistem(SqlConnection conn, SqlTransaction trans, string idBarang, int perbedaan)
         {
-            string query = "UPDATE [master].[barang] SET stok = stok + @diff WHERE idBarang = @id";
-            using (SqlCommand cmd = new SqlCommand(query, conn, trans))
+            using (SqlCommand cmd = new SqlCommand("[master].[sp_UpdateStokBarang]", conn, trans))
             {
-                cmd.Parameters.AddWithValue("@diff", perbedaan);
+                cmd.CommandType = CommandType.StoredProcedure;
+
                 cmd.Parameters.AddWithValue("@id", idBarang);
+                cmd.Parameters.AddWithValue("@diff", perbedaan);
+
                 cmd.ExecuteNonQuery();
             }
         }
@@ -311,6 +317,7 @@ namespace ManajemenSarPras
                 using (var conn = DatabaseConfig.GetConnection())
                 {
                     if (conn == null) return;
+                    conn.Open();
 
                     SqlTransaction transaction = conn.BeginTransaction();
 
@@ -319,65 +326,22 @@ namespace ManajemenSarPras
                         bool isEdit = !string.IsNullOrEmpty(selectedIdPermintaan);
                         string idBarangBaru = txtIdBarang.Text.Trim();
 
-                        if (!isEdit)
+                        using (SqlCommand cmd = new SqlCommand("sp_SavePermintaanBarang", conn, transaction))
                         {
-                            int stokTersedia = CekStokAktual(conn, transaction, idBarangBaru);
-                            if (stokTersedia < jumlahBaru)
-                            {
-                                throw new Exception($"Stok tidak mencukupi! Sisa stok aktual: {stokTersedia}");
-                            }
+                            cmd.CommandType = CommandType.StoredProcedure;
 
-                            string qInsert = "INSERT INTO [transaction].[permintaanBarang] (idBarang, idRuangan, namaPeminta, jumlah, tglPermintaan, idSemester) VALUES (@idB, @idR, @nama, @jml, GETDATE(), @smt)";
-                            using (SqlCommand cmd = new SqlCommand(qInsert, conn, transaction))
-                            {
-                                cmd.Parameters.AddWithValue("@idB", idBarangBaru);
-                                cmd.Parameters.AddWithValue("@idR", cmbRuangan.SelectedValue);
-                                cmd.Parameters.AddWithValue("@nama", txtNma.Text.Trim());
-                                cmd.Parameters.AddWithValue("@jml", jumlahBaru);
-                                cmd.Parameters.AddWithValue("@smt", cmbSemester.SelectedValue);
-                                cmd.ExecuteNonQuery();
-                            }
-
-                            UpdateStokSistem(conn, transaction, idBarangBaru, -jumlahBaru);
-                        }
-                        else
-                        {
-                            if (idBarangBaru == idBarangLama)
-                            {
-                                int selisih = jumlahBaru - jumlahLama;
-                                if (selisih > 0)
-                                {
-                                    int stokTersedia = CekStokAktual(conn, transaction, idBarangBaru);
-                                    if (stokTersedia < selisih)
-                                    {
-                                        throw new Exception($"Penambahan permintaan ditolak. Kekurangan stok: {selisih - stokTersedia} unit.");
-                                    }
-                                }
-                                UpdateStokSistem(conn, transaction, idBarangBaru, -selisih);
-                            }
-                            else
-                            {
-                                int stokTersedia = CekStokAktual(conn, transaction, idBarangBaru);
-                                if (stokTersedia < jumlahBaru)
-                                {
-                                    throw new Exception($"Barang pengganti tidak memiliki stok yang cukup! Sisa stok: {stokTersedia}");
-                                }
-
-                                UpdateStokSistem(conn, transaction, idBarangLama, jumlahLama);
-                                UpdateStokSistem(conn, transaction, idBarangBaru, -jumlahBaru);
-                            }
-
-                            string qUpdate = "UPDATE [transaction].[permintaanBarang] SET idBarang=@idB, idRuangan=@idR, namaPeminta=@nama, jumlah=@jml, idSemester=@smt WHERE idPermintaanBarang=@idPB";
-                            using (SqlCommand cmd = new SqlCommand(qUpdate, conn, transaction))
-                            {
-                                cmd.Parameters.AddWithValue("@idB", idBarangBaru);
-                                cmd.Parameters.AddWithValue("@idR", cmbRuangan.SelectedValue);
-                                cmd.Parameters.AddWithValue("@nama", txtNma.Text.Trim());
-                                cmd.Parameters.AddWithValue("@jml", jumlahBaru);
-                                cmd.Parameters.AddWithValue("@smt", cmbSemester.SelectedValue);
+                            if (isEdit)
                                 cmd.Parameters.AddWithValue("@idPB", selectedIdPermintaan);
-                                cmd.ExecuteNonQuery();
-                            }
+                            else
+                                cmd.Parameters.AddWithValue("@idPB", DBNull.Value);
+
+                            cmd.Parameters.AddWithValue("@idB", txtIdBarang.Text.Trim());
+                            cmd.Parameters.AddWithValue("@idR", cmbRuangan.SelectedValue);
+                            cmd.Parameters.AddWithValue("@nama", txtNma.Text.Trim());
+                            cmd.Parameters.AddWithValue("@jml", jumlahBaru);
+                            cmd.Parameters.AddWithValue("@smt", cmbSemester.SelectedValue);
+
+                            cmd.ExecuteNonQuery();
                         }
 
                         transaction.Commit();
@@ -407,31 +371,23 @@ namespace ManajemenSarPras
                     using (var conn = DatabaseConfig.GetConnection())
                     {
                         if (conn == null) return;
+                        conn.Open();
 
                         SqlTransaction transaction = conn.BeginTransaction();
 
-                        try
+                        using (SqlCommand cmd = new SqlCommand("sp_DeletePermintaanBarang", conn, transaction))
                         {
-                            UpdateStokSistem(conn, transaction, idBarangLama, jumlahLama);
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@idPB", selectedIdPermintaan);
 
-                            string qDelete = "DELETE FROM [transaction].[permintaanBarang] WHERE idPermintaanBarang=@idPB";
-                            using (SqlCommand cmd = new SqlCommand(qDelete, conn, transaction))
-                            {
-                                cmd.Parameters.AddWithValue("@idPB", selectedIdPermintaan);
-                                cmd.ExecuteNonQuery();
-                            }
-
-                            transaction.Commit();
-                            MessageBox.Show("Data permintaan dihapus dan stok telah dipulihkan.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                            RefreshSemuaTabel();
-                            ResetForm();
+                            cmd.ExecuteNonQuery();
                         }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            MessageBox.Show("Gagal menghapus: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
+
+                        MessageBox.Show("Data permintaan dihapus dan stok telah dipulihkan secara otomatis!",
+                        "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        RefreshSemuaTabel();
+                        ResetForm();
                     }
                 }
                 catch (Exception ex) { MessageBox.Show("Fatal Database Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
