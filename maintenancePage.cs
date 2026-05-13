@@ -246,14 +246,17 @@ namespace ManajemenSarPras
         {
             if (e.RowIndex >= 0)
             {
-                DataGridViewRow row = dataGridView2.Rows[e.RowIndex];
+                DataRowView row = (DataRowView)bsBarang.Current;
 
-                selectedIdDetailBarang = row.Cells["ID Detail"].Value.ToString();
-                selectedIdBarang = row.Cells["idBarang"].Value.ToString();
+                selectedIdDetailBarang = row["ID Detail"].ToString();
+                selectedIdBarang = row["idBarang"].ToString();
                 kondisiLama = -1;
 
-                cmbDetailBarang.Text = row.Cells["Aset"].Value.ToString();
-                cmbRuangan.Text = row.Cells["Lokasi"].Value.ToString();
+                cmbDetailBarang.Text = row["Aset"].ToString();
+                cmbRuangan.Text = row["Lokasi"].ToString();
+
+                btnSimpan.Text = "Simpan";
+                
             }
         }
 
@@ -261,26 +264,20 @@ namespace ManajemenSarPras
         {
             if (e.RowIndex >= 0)
             {
-                DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
+                DataRowView row = (DataRowView)bsBarang.Current;
 
-                selectedIdMaintenance = row.Cells["ID"].Value.ToString();
-                selectedIdDetailBarang = row.Cells["idDetailBarang"].Value.ToString();
-                selectedIdBarang = row.Cells["idBarang"].Value.ToString();
-                kondisiLama = row.Cells["Status"].Value.ToString() == "Baik" ? 1 : 0;
+                // buat ambil id kalo mau update/delete
+                selectedIdMaintenance = row["ID"].ToString();
+                selectedIdDetailBarang = row["idDetailBarang"].ToString();
+                selectedIdBarang = row["idBarang"].ToString();
 
-                cmbDetailBarang.Text = row.Cells["Aset"].Value.ToString();
-                cmbRuangan.Text = row.Cells["Lokasi"].Value.ToString();
-
-                dtpTglCek.Value = Convert.ToDateTime(row.Cells["Tgl Cek"].Value);
-
-                cmbKaryawan.SelectedValue = Convert.ToInt32(row.Cells["idKaryawan"].Value);
-                cmbSemester.SelectedValue = Convert.ToInt32(row.Cells["idSemester"].Value);
-
-                txtKerusakan.Text = row.Cells["Kerusakan"].Value.ToString();
-                txtTindakLanjut.Text = row.Cells["Tindak Lanjut"].Value.ToString();
-
+                // radio button
+                kondisiLama = row["Status"].ToString() == "Baik" ? 1 : 0;
                 if (kondisiLama == 1) rbBaik.Checked = true;
                 else rbRusak.Checked = true;
+
+                cmbDetailBarang.Text = row["Aset"].ToString();
+                cmbRuangan.Text = row["Lokasi"].ToString();
 
                 btnSimpan.Text = "Update";
                 btnHapus.Enabled = true;
