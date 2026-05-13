@@ -141,6 +141,11 @@
     <Compile Include="reportPage.Designer.cs">
       <DependentUpon>reportPage.cs</DependentUpon>
     </Compile>
+    <Compile Include="satprasDBDataSet.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>satprasDBDataSet.xsd</DependentUpon>
+    </Compile>
     <Compile Include="utils\databaseConnection.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -191,6 +196,17 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="satprasDBDataSet.xsc">
+      <DependentUpon>satprasDBDataSet.xsd</DependentUpon>
+    </None>
+    <None Include="satprasDBDataSet.xsd">
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>satprasDBDataSet.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="satprasDBDataSet.xss">
+      <DependentUpon>satprasDBDataSet.xsd</DependentUpon>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
