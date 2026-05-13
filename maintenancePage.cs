@@ -147,6 +147,9 @@ namespace ManajemenSarPras
             catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Barang", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
+
+        private BindingSource bsMaintenance = new BindingSource();
+        private DataTable dtMaint = new DataTable();
         private void LoadDataRiwayat(string keyword = "")
         {
             try
@@ -156,48 +159,18 @@ namespace ManajemenSarPras
                     if (conn == null) return;
 
                     string query = @"
-                        SELECT 
-                            m.idMaintenance AS [ID], 
-                            db.idDetailBarang,
-                            b.idBarang,
-                            b.namaBarang AS [Aset], 
-                            r.namaRuangan AS [Lokasi], 
-                            m.tglCek AS [Tgl Cek], 
-                            CASE WHEN m.kondisi = 1 THEN 'Baik' ELSE 'Rusak' END AS [Status],
-                            m.kerusakan AS [Kerusakan], 
-                            m.tindakLanjut AS [Tindak Lanjut],
-                            k.namaKaryawan AS [Petugas],
-                            m.idKaryawan,
-                            m.idSemester
-                        FROM [transaction].[maintenance] m 
-                        JOIN [transaction].[detailBarang] db ON m.idDetailBarang = db.idDetailBarang 
-                        JOIN [master].[barang] b ON db.idBarang = b.idBarang
-                        JOIN [master].[ruangan] r ON db.idRuangan = r.idRuangan
-                        JOIN [master].[karyawan] k ON m.idKaryawan = k.idKaryawan
-                        JOIN [master].[semester] s ON m.idSemester = s.idSemester";
+                        SELECT * FROM [dbo].[vwMaintenanceHistory]";
 
-                    if (!string.IsNullOrEmpty(keyword))
+                    using (SqlDataAdapter da = new SqlDataAdapter(query, conn))
                     {
-                        query += " WHERE b.namaBarang LIKE @kw OR k.namaKaryawan LIKE @kw OR r.namaRuangan LIKE @kw OR m.idMaintenance LIKE @kw";
-                    }
+                        dtMaint = new DataTable();
+                        da.Fill(dtMaint);
+                        bsMaintenance.DataSource = dtMaint;
+                        dataGridView1.DataSource = bsMaintenance;
+                        bindingNavigator1.BindingSource = bsMaintenance;
 
-                    query += " ORDER BY m.idMaintenance DESC";
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        if (!string.IsNullOrEmpty(keyword)) cmd.Parameters.AddWithValue("@kw", "%" + keyword + "%");
-
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            DataTable dt = new DataTable();
-                            da.Fill(dt);
-                            dataGridView1.DataSource = dt;
-
-                            if (dataGridView1.Columns["idDetailBarang"] != null) dataGridView1.Columns["idDetailBarang"].Visible = false;
-                            if (dataGridView1.Columns["idBarang"] != null) dataGridView1.Columns["idBarang"].Visible = false;
-                            if (dataGridView1.Columns["idKaryawan"] != null) dataGridView1.Columns["idKaryawan"].Visible = false;
-                            if (dataGridView1.Columns["idSemester"] != null) dataGridView1.Columns["idSemester"].Visible = false;
-                        }
+                        txtKerusakan.DataBindings.Clear();
+                        txtKerusakan.DataBindings.Add("Text", bsMaintenance, "kerusakan");
                     }
                 }
             }
