@@ -327,44 +327,33 @@ namespace ManajemenSarPras
                 using (var conn = DatabaseConfig.GetConnection())
                 {
                     if (conn == null) return;
+                    conn.Open();
 
                     SqlTransaction transaction = conn.BeginTransaction();
 
                     try
                     {
                         bool isEdit = !string.IsNullOrEmpty(selectedIdMaintenance);
-                        string query;
+                        string query = @"[dbo].[sp_SaveMaintenance]";
 
-                        if (isEdit)
+                        using (SqlCommand cmd =new SqlCommand(query, conn, transaction))
                         {
-                            query = @"UPDATE [transaction].[maintenance] SET 
-                                      idKaryawan=@idK, idDetailBarang=@idD, tglCek=@tgl, 
-                                      kondisi=@kon, kerusakan=@ker, tindakLanjut=@tin, idSemester=@smt 
-                                      WHERE idMaintenance=@idM";
+                            // set commandtype ke sp
+                            cmd.CommandType = CommandType.StoredProcedure;
 
-                            if (kondisiLama == 1 && kondisiBaru == 0) ExecuteStockUpdate(conn, transaction, selectedIdBarang, -1);
-                            else if (kondisiLama == 0 && kondisiBaru == 1) ExecuteStockUpdate(conn, transaction, selectedIdBarang, 1);
-                        }
-                        else
-                        {
-                            query = @"INSERT INTO [transaction].[maintenance] 
-                                      (idKaryawan, idDetailBarang, tglCek, kondisi, kerusakan, tindakLanjut, idSemester) 
-                                      VALUES (@idK, @idD, @tgl, @kon, @ker, @tin, @smt)";
+                            if (isEdit)
+                                cmd.Parameters.AddWithValue("@idM", selectedIdMaintenance);
+                            else
+                                cmd.Parameters.AddWithValue("@idM", DBNull.Value);
 
-                            if (kondisiBaru == 0) ExecuteStockUpdate(conn, transaction, selectedIdBarang, -1);
-                        }
-
-                        using (SqlCommand cmd = new SqlCommand(query, conn, transaction))
-                        {
                             cmd.Parameters.AddWithValue("@idK", cmbKaryawan.SelectedValue);
                             cmd.Parameters.AddWithValue("@idD", selectedIdDetailBarang);
+                            cmd.Parameters.AddWithValue("@idB", selectedIdBarang); // Parameter baru buat update stok otomatis
                             cmd.Parameters.AddWithValue("@tgl", dtpTglCek.Value.Date);
                             cmd.Parameters.AddWithValue("@kon", kondisiBaru);
                             cmd.Parameters.AddWithValue("@ker", rbBaik.Checked ? "-" : txtKerusakan.Text.Trim());
                             cmd.Parameters.AddWithValue("@tin", txtTindakLanjut.Text.Trim());
                             cmd.Parameters.AddWithValue("@smt", cmbSemester.SelectedValue);
-
-                            if (isEdit) cmd.Parameters.AddWithValue("@idM", selectedIdMaintenance);
 
                             cmd.ExecuteNonQuery();
                         }
@@ -396,22 +385,22 @@ namespace ManajemenSarPras
                     using (var conn = DatabaseConfig.GetConnection())
                     {
                         if (conn == null) return;
+                        conn.Open();
 
                         SqlTransaction transaction = conn.BeginTransaction();
 
                         try
                         {
-                            if (kondisiLama == 0) ExecuteStockUpdate(conn, transaction, selectedIdBarang, 1);
-
-                            string query = "DELETE FROM [transaction].[maintenance] WHERE idMaintenance=@idM";
-                            using (SqlCommand cmd = new SqlCommand(query, conn, transaction))
+                            using (SqlCommand cmd = new SqlCommand("[dbo].[sp_DeleteMaintenance]", conn, transaction))
                             {
+                                cmd.CommandType = CommandType.StoredProcedure; // deklarasi sp
                                 cmd.Parameters.AddWithValue("@idM", selectedIdMaintenance);
+
                                 cmd.ExecuteNonQuery();
                             }
 
                             transaction.Commit();
-                            MessageBox.Show("Log Maintenance berhasil dihapus dan pemulihan stok telah disinkronisasi.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            MessageBox.Show("log maintenance berhasil dihapus dan pemulihan stok berhasil.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                             RefreshSemuaTabel();
                             ResetForm();
