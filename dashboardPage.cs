@@ -76,7 +76,7 @@ namespace ManajemenSarPras
                 {
                     if (conn != null && conn.State == ConnectionState.Open)
                     {
-                        MessageBox.Show("Koneksi ke satprasDB Berhasil, Tam! Gaspol!", "Info Koneksi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Koneksi ke satprasDB Berhasil!", "Info Koneksi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }
