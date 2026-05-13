@@ -163,21 +163,7 @@ namespace ManajemenSarPras
                     if (conn == null) return;
 
                     string query = @"
-                        SELECT 
-                            p.idPermintaanBarang AS [ID], 
-                            p.idBarang AS [ID Barang], 
-                            b.namaBarang AS [Barang], 
-                            r.namaRuangan AS [Ruangan], 
-                            p.namaPeminta AS [Peminta], 
-                            p.jumlah AS [Qty], 
-                            s.tahunAjaran AS [Semester],
-                            p.idRuangan,
-                            p.idSemester
-                        FROM [transaction].[permintaanBarang] p
-                        JOIN [master].[barang] b ON p.idBarang = b.idBarang
-                        JOIN [master].[ruangan] r ON p.idRuangan = r.idRuangan
-                        JOIN [master].[semester] s ON p.idSemester = s.idSemester
-                        WHERE b.tipeBarang = 0";
+                                   SELECT * FROM [dbo].[vwDataTransaksi]";
 
                     if (!string.IsNullOrEmpty(keyword))
                     {
