@@ -42,7 +42,6 @@
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.addPeminta = new System.Windows.Forms.Button();
             this.updatePminjam = new System.Windows.Forms.Button();
-            this.hpsPermintaan = new System.Windows.Forms.Button();
             this.dataGridView2 = new System.Windows.Forms.DataGridView();
             this.cmbRuangan = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -66,6 +65,8 @@
             this.bindingNavigatorSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.idSmt = new System.Windows.Forms.Label();
             this.cmbSemester = new System.Windows.Forms.ComboBox();
+            this.cmbSatuanRequest = new System.Windows.Forms.ComboBox();
+            this.label6 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.bindingNavigator1)).BeginInit();
@@ -116,14 +117,14 @@
             this.namaPeminta.AutoSize = true;
             this.namaPeminta.Location = new System.Drawing.Point(31, 223);
             this.namaPeminta.Name = "namaPeminta";
-            this.namaPeminta.Size = new System.Drawing.Size(96, 16);
+            this.namaPeminta.Size = new System.Drawing.Size(105, 16);
             this.namaPeminta.TabIndex = 4;
-            this.namaPeminta.Text = "Nama Peminta";
+            this.namaPeminta.Text = "Nama Pemohon";
             // 
             // jml
             // 
             this.jml.AutoSize = true;
-            this.jml.Location = new System.Drawing.Point(31, 274);
+            this.jml.Location = new System.Drawing.Point(31, 327);
             this.jml.Name = "jml";
             this.jml.Size = new System.Drawing.Size(50, 16);
             this.jml.TabIndex = 5;
@@ -145,7 +146,7 @@
             // 
             // txtJmlh
             // 
-            this.txtJmlh.Location = new System.Drawing.Point(232, 274);
+            this.txtJmlh.Location = new System.Drawing.Point(232, 327);
             this.txtJmlh.Name = "txtJmlh";
             this.txtJmlh.Size = new System.Drawing.Size(207, 22);
             this.txtJmlh.TabIndex = 10;
@@ -165,31 +166,21 @@
             // 
             // addPeminta
             // 
-            this.addPeminta.Location = new System.Drawing.Point(35, 417);
+            this.addPeminta.Location = new System.Drawing.Point(35, 464);
             this.addPeminta.Name = "addPeminta";
             this.addPeminta.Size = new System.Drawing.Size(191, 38);
             this.addPeminta.TabIndex = 14;
             this.addPeminta.Text = "Tambah Permintaan";
             this.addPeminta.UseVisualStyleBackColor = true;
-            this.addPeminta.Click += new System.EventHandler(this.addPeminta_Click);
             // 
             // updatePminjam
             // 
-            this.updatePminjam.Location = new System.Drawing.Point(232, 417);
+            this.updatePminjam.Location = new System.Drawing.Point(232, 464);
             this.updatePminjam.Name = "updatePminjam";
             this.updatePminjam.Size = new System.Drawing.Size(207, 38);
             this.updatePminjam.TabIndex = 15;
-            this.updatePminjam.Text = "Update Permintaan";
+            this.updatePminjam.Text = "RESET TEXT";
             this.updatePminjam.UseVisualStyleBackColor = true;
-            // 
-            // hpsPermintaan
-            // 
-            this.hpsPermintaan.Location = new System.Drawing.Point(138, 461);
-            this.hpsPermintaan.Name = "hpsPermintaan";
-            this.hpsPermintaan.Size = new System.Drawing.Size(164, 41);
-            this.hpsPermintaan.TabIndex = 16;
-            this.hpsPermintaan.Text = "Hapus Permintaan";
-            this.hpsPermintaan.UseVisualStyleBackColor = true;
             // 
             // dataGridView2
             // 
@@ -240,16 +231,15 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(31, 368);
+            this.label4.Location = new System.Drawing.Point(31, 421);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(58, 16);
             this.label4.TabIndex = 23;
             this.label4.Text = "Tanggal";
-            this.label4.Click += new System.EventHandler(this.label4_Click);
             // 
             // dateTimePicker1
             // 
-            this.dateTimePicker1.Location = new System.Drawing.Point(232, 368);
+            this.dateTimePicker1.Location = new System.Drawing.Point(239, 421);
             this.dateTimePicker1.Name = "dateTimePicker1";
             this.dateTimePicker1.Size = new System.Drawing.Size(200, 22);
             this.dateTimePicker1.TabIndex = 24;
@@ -296,7 +286,7 @@
             this.bindingNavigator1.MovePreviousItem = this.bindingNavigatorMovePreviousItem;
             this.bindingNavigator1.Name = "bindingNavigator1";
             this.bindingNavigator1.PositionItem = this.bindingNavigatorPositionItem;
-            this.bindingNavigator1.Size = new System.Drawing.Size(939, 27);
+            this.bindingNavigator1.Size = new System.Drawing.Size(939, 31);
             this.bindingNavigator1.TabIndex = 27;
             this.bindingNavigator1.Text = "bindingNavigator1";
             // 
@@ -306,13 +296,13 @@
             this.bindingNavigatorAddNewItem.Image = ((System.Drawing.Image)(resources.GetObject("bindingNavigatorAddNewItem.Image")));
             this.bindingNavigatorAddNewItem.Name = "bindingNavigatorAddNewItem";
             this.bindingNavigatorAddNewItem.RightToLeftAutoMirrorImage = true;
-            this.bindingNavigatorAddNewItem.Size = new System.Drawing.Size(29, 24);
+            this.bindingNavigatorAddNewItem.Size = new System.Drawing.Size(29, 28);
             this.bindingNavigatorAddNewItem.Text = "Add new";
             // 
             // bindingNavigatorCountItem
             // 
             this.bindingNavigatorCountItem.Name = "bindingNavigatorCountItem";
-            this.bindingNavigatorCountItem.Size = new System.Drawing.Size(45, 24);
+            this.bindingNavigatorCountItem.Size = new System.Drawing.Size(45, 28);
             this.bindingNavigatorCountItem.Text = "of {0}";
             this.bindingNavigatorCountItem.ToolTipText = "Total number of items";
             // 
@@ -322,7 +312,7 @@
             this.bindingNavigatorDeleteItem.Image = ((System.Drawing.Image)(resources.GetObject("bindingNavigatorDeleteItem.Image")));
             this.bindingNavigatorDeleteItem.Name = "bindingNavigatorDeleteItem";
             this.bindingNavigatorDeleteItem.RightToLeftAutoMirrorImage = true;
-            this.bindingNavigatorDeleteItem.Size = new System.Drawing.Size(29, 24);
+            this.bindingNavigatorDeleteItem.Size = new System.Drawing.Size(29, 28);
             this.bindingNavigatorDeleteItem.Text = "Delete";
             // 
             // bindingNavigatorMoveFirstItem
@@ -331,7 +321,7 @@
             this.bindingNavigatorMoveFirstItem.Image = ((System.Drawing.Image)(resources.GetObject("bindingNavigatorMoveFirstItem.Image")));
             this.bindingNavigatorMoveFirstItem.Name = "bindingNavigatorMoveFirstItem";
             this.bindingNavigatorMoveFirstItem.RightToLeftAutoMirrorImage = true;
-            this.bindingNavigatorMoveFirstItem.Size = new System.Drawing.Size(29, 24);
+            this.bindingNavigatorMoveFirstItem.Size = new System.Drawing.Size(29, 28);
             this.bindingNavigatorMoveFirstItem.Text = "Move first";
             // 
             // bindingNavigatorMovePreviousItem
@@ -340,13 +330,13 @@
             this.bindingNavigatorMovePreviousItem.Image = ((System.Drawing.Image)(resources.GetObject("bindingNavigatorMovePreviousItem.Image")));
             this.bindingNavigatorMovePreviousItem.Name = "bindingNavigatorMovePreviousItem";
             this.bindingNavigatorMovePreviousItem.RightToLeftAutoMirrorImage = true;
-            this.bindingNavigatorMovePreviousItem.Size = new System.Drawing.Size(29, 24);
+            this.bindingNavigatorMovePreviousItem.Size = new System.Drawing.Size(29, 28);
             this.bindingNavigatorMovePreviousItem.Text = "Move previous";
             // 
             // bindingNavigatorSeparator
             // 
             this.bindingNavigatorSeparator.Name = "bindingNavigatorSeparator";
-            this.bindingNavigatorSeparator.Size = new System.Drawing.Size(6, 27);
+            this.bindingNavigatorSeparator.Size = new System.Drawing.Size(6, 31);
             // 
             // bindingNavigatorPositionItem
             // 
@@ -361,7 +351,7 @@
             // bindingNavigatorSeparator1
             // 
             this.bindingNavigatorSeparator1.Name = "bindingNavigatorSeparator1";
-            this.bindingNavigatorSeparator1.Size = new System.Drawing.Size(6, 27);
+            this.bindingNavigatorSeparator1.Size = new System.Drawing.Size(6, 31);
             // 
             // bindingNavigatorMoveNextItem
             // 
@@ -369,7 +359,7 @@
             this.bindingNavigatorMoveNextItem.Image = ((System.Drawing.Image)(resources.GetObject("bindingNavigatorMoveNextItem.Image")));
             this.bindingNavigatorMoveNextItem.Name = "bindingNavigatorMoveNextItem";
             this.bindingNavigatorMoveNextItem.RightToLeftAutoMirrorImage = true;
-            this.bindingNavigatorMoveNextItem.Size = new System.Drawing.Size(29, 24);
+            this.bindingNavigatorMoveNextItem.Size = new System.Drawing.Size(29, 28);
             this.bindingNavigatorMoveNextItem.Text = "Move next";
             // 
             // bindingNavigatorMoveLastItem
@@ -378,18 +368,18 @@
             this.bindingNavigatorMoveLastItem.Image = ((System.Drawing.Image)(resources.GetObject("bindingNavigatorMoveLastItem.Image")));
             this.bindingNavigatorMoveLastItem.Name = "bindingNavigatorMoveLastItem";
             this.bindingNavigatorMoveLastItem.RightToLeftAutoMirrorImage = true;
-            this.bindingNavigatorMoveLastItem.Size = new System.Drawing.Size(29, 24);
+            this.bindingNavigatorMoveLastItem.Size = new System.Drawing.Size(29, 28);
             this.bindingNavigatorMoveLastItem.Text = "Move last";
             // 
             // bindingNavigatorSeparator2
             // 
             this.bindingNavigatorSeparator2.Name = "bindingNavigatorSeparator2";
-            this.bindingNavigatorSeparator2.Size = new System.Drawing.Size(6, 27);
+            this.bindingNavigatorSeparator2.Size = new System.Drawing.Size(6, 31);
             // 
             // idSmt
             // 
             this.idSmt.AutoSize = true;
-            this.idSmt.Location = new System.Drawing.Point(31, 325);
+            this.idSmt.Location = new System.Drawing.Point(31, 378);
             this.idSmt.Name = "idSmt";
             this.idSmt.Size = new System.Drawing.Size(65, 16);
             this.idSmt.TabIndex = 6;
@@ -398,16 +388,35 @@
             // cmbSemester
             // 
             this.cmbSemester.FormattingEnabled = true;
-            this.cmbSemester.Location = new System.Drawing.Point(225, 322);
+            this.cmbSemester.Location = new System.Drawing.Point(232, 378);
             this.cmbSemester.Name = "cmbSemester";
             this.cmbSemester.Size = new System.Drawing.Size(207, 24);
             this.cmbSemester.TabIndex = 19;
+            // 
+            // cmbSatuanRequest
+            // 
+            this.cmbSatuanRequest.FormattingEnabled = true;
+            this.cmbSatuanRequest.Location = new System.Drawing.Point(232, 272);
+            this.cmbSatuanRequest.Name = "cmbSatuanRequest";
+            this.cmbSatuanRequest.Size = new System.Drawing.Size(207, 24);
+            this.cmbSatuanRequest.TabIndex = 29;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(31, 281);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(83, 16);
+            this.label6.TabIndex = 28;
+            this.label6.Text = "KUANTITAS";
             // 
             // permintaanBarang
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.AutoScroll = true;
             this.ClientSize = new System.Drawing.Size(939, 943);
+            this.Controls.Add(this.cmbSatuanRequest);
+            this.Controls.Add(this.label6);
             this.Controls.Add(this.bindingNavigator1);
             this.Controls.Add(this.textBox2);
             this.Controls.Add(this.label5);
@@ -419,7 +428,6 @@
             this.Controls.Add(this.cmbSemester);
             this.Controls.Add(this.cmbRuangan);
             this.Controls.Add(this.dataGridView2);
-            this.Controls.Add(this.hpsPermintaan);
             this.Controls.Add(this.updatePminjam);
             this.Controls.Add(this.addPeminta);
             this.Controls.Add(this.dataGridView1);
@@ -461,7 +469,6 @@
         private System.Windows.Forms.DataGridView dataGridView1;
         private System.Windows.Forms.Button addPeminta;
         private System.Windows.Forms.Button updatePminjam;
-        private System.Windows.Forms.Button hpsPermintaan;
         private System.Windows.Forms.DataGridView dataGridView2;
         private System.Windows.Forms.ComboBox cmbRuangan;
         private System.Windows.Forms.Label label2;
@@ -485,5 +492,7 @@
         private System.Windows.Forms.ToolStripSeparator bindingNavigatorSeparator2;
         private System.Windows.Forms.Label idSmt;
         private System.Windows.Forms.ComboBox cmbSemester;
+        private System.Windows.Forms.ComboBox cmbSatuanRequest;
+        private System.Windows.Forms.Label label6;
     }
 }

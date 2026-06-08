@@ -8,10 +8,8 @@ namespace ManajemenSarPras
 {
     public partial class maintenancePage : Form
     {
-        private string selectedIdMaintenance = "";
         private string selectedIdDetailBarang = "";
         private string selectedIdBarang = "";
-        private int kondisiLama = -1;
 
         public maintenancePage()
         {
@@ -28,8 +26,13 @@ namespace ManajemenSarPras
             this.textBox2.TextChanged += new EventHandler(textBox2_TextChanged);
 
             this.btnSimpan.Click += new EventHandler(btnSimpan_Click);
-            this.btnHapus.Click += new EventHandler(btnHapus_Click);
             this.btnReset.Click += new EventHandler(btnReset_Click);
+
+            this.rbBaik.CheckedChanged += new EventHandler(rbKondisi_CheckedChanged);
+            this.rbRusak.CheckedChanged += new EventHandler(rbKondisi_CheckedChanged);
+
+            // Handler btnHapus di-bypass langsung ke pesan peringatan jika di-klik
+            this.btnHapus.Click += (s, e) => { MessageBox.Show("Kebijakan Sistem: Log Riwayat Maintenance permanen dan dilarang keras untuk dihapus!", "Akses Ditolak", MessageBoxButtons.OK, MessageBoxIcon.Stop); };
         }
 
         private void btnKembali_Click(object sender, EventArgs e)
@@ -51,10 +54,67 @@ namespace ManajemenSarPras
                 }
             }
 
+            cmbTindakLanjut.Items.Clear();
+            cmbTindakLanjut.Items.Add("Diganti");
+            cmbTindakLanjut.Items.Add("Diperbaiki");
+            cmbTindakLanjut.DropDownStyle = ComboBoxStyle.DropDownList;
+
             LoadComboSemester();
             LoadComboKaryawan();
             RefreshSemuaTabel();
             ResetForm();
+        }
+
+        private string GetActiveSemesterFromSystem()
+        {
+            int senderTahun = DateTime.Now.Year;
+            int senderBulan = DateTime.Now.Month;
+
+            string tipeSemester;
+            string tahunAjaran;
+
+            if (senderBulan >= 7)
+            {
+                tipeSemester = "Ganjil";
+                tahunAjaran = $"{senderTahun}/{senderTahun + 1}";
+            }
+            else
+            {
+                tipeSemester = "Genap";
+                tahunAjaran = $"{senderTahun - 1}/{senderTahun}";
+            }
+
+            return $"{tahunAjaran} ({tipeSemester})";
+        }
+
+        private void AutoSelectActiveSemester()
+        {
+            if (cmbSemester.Items.Count > 0)
+            {
+                cmbSemester.SelectedIndex = 0;
+            }
+            else
+            {
+                cmbSemester.SelectedIndex = -1;
+            }
+        }
+
+        private void rbKondisi_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbBaik.Checked)
+            {
+                txtKerusakan.Text = "-";
+                txtKerusakan.Enabled = false;
+
+                cmbTindakLanjut.SelectedIndex = -1;
+                cmbTindakLanjut.Enabled = false;
+            }
+            else if (rbRusak.Checked)
+            {
+                if (txtKerusakan.Text == "-") txtKerusakan.Clear();
+                txtKerusakan.Enabled = true;
+                cmbTindakLanjut.Enabled = true;
+            }
         }
 
         private void LoadComboKaryawan()
@@ -77,7 +137,7 @@ namespace ManajemenSarPras
                     }
                 }
             }
-            catch (Exception ex) { MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+            catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Karyawan", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
         private void LoadComboSemester()
@@ -87,41 +147,26 @@ namespace ManajemenSarPras
                 using (var conn = DatabaseConfig.GetConnection())
                 {
                     if (conn == null) return;
+                    string query = "SELECT idSemester, tahunAjaran FROM [master].[semester] WHERE tahunAjaran = @active";
 
-                    string query = "SELECT idSemester, tahunAjaran FROM [master].[semester] WHERE tahunAjaran LIKE '%' + CAST(YEAR(GETDATE()) AS VARCHAR) + '%'";
-
-                    using (SqlDataAdapter da = new SqlDataAdapter(query, conn))
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
-                        cmbSemester.DataSource = dt;
-                        cmbSemester.DisplayMember = "tahunAjaran";
-                        cmbSemester.ValueMember = "idSemester";
-                        cmbSemester.DropDownStyle = ComboBoxStyle.DropDownList;
-                        cmbSemester.SelectedIndex = -1;
+                        cmd.Parameters.AddWithValue("@active", GetActiveSemesterFromSystem());
+
+                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                        {
+                            DataTable dt = new DataTable();
+                            da.Fill(dt);
+                            cmbSemester.DataSource = dt;
+                            cmbSemester.DisplayMember = "tahunAjaran";
+                            cmbSemester.ValueMember = "idSemester";
+                            cmbSemester.DropDownStyle = ComboBoxStyle.DropDownList;
+                            cmbSemester.SelectedIndex = -1;
+                        }
                     }
                 }
             }
-            catch (Exception ex) { MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
-        }
-
-        private void BindBarangControls()
-        {
-            txtKerusakan.DataBindings.Clear();
-            txtTindakLanjut.DataBindings.Clear();
-            cmbDetailBarang.DataBindings.Clear();
-            cmbKaryawan.DataBindings.Clear();
-            cmbRuangan.DataBindings.Clear();
-            cmbSemester.DataBindings.Clear();
-
-            txtKerusakan.DataBindings.Add("Text", bsMaintenance, "Kerusakan Barang");
-            txtTindakLanjut.DataBindings.Add("Text", bsMaintenance, "Tindak Lanjut");
-
-            cmbDetailBarang.DataBindings.Add("Text", bsMaintenance, "Aset");
-            cmbRuangan.DataBindings.Add("Text", bsMaintenance, "Lokasi");
-
-            cmbKaryawan.DataBindings.Add("SelectedValue", bsMaintenance, "idKaryawan");
-            cmbSemester.DataBindings.Add("SelectedValue", bsMaintenance, "idSemester");
+            catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Semester", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
         private BindingSource bsBarang = new BindingSource();
@@ -133,9 +178,7 @@ namespace ManajemenSarPras
                 using (var conn = DatabaseConfig.GetConnection())
                 {
                     if (conn == null) return;
-
-                    string query = @"
-                        SELECT * FROM [dbo].[vwDetailBarangAsset]";
+                    string query = @"SELECT * FROM [dbo].[vwDetailBarangAsset]";
 
                     if (!string.IsNullOrEmpty(keyword))
                     {
@@ -150,24 +193,18 @@ namespace ManajemenSarPras
                         {
                             dtBarang = new DataTable();
                             da.Fill(dtBarang);
-
                             bsBarang.DataSource = dtBarang;
-
                             dataGridView2.DataSource = bsBarang;
                             bindingNavigator1.BindingSource = bsBarang;
 
-                            // buat nyembunyiin ID yang nggak perlu diliat user tapi penting buat kodingan
                             if (dataGridView2.Columns["idBarang"] != null)
                                 dataGridView2.Columns["idBarang"].Visible = false;
-
-                            BindBarangControls();
                         }
                     }
                 }
             }
-            catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Barang", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+            catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Data Aset", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
-
 
         private BindingSource bsMaintenance = new BindingSource();
         private DataTable dtMaint = new DataTable();
@@ -178,20 +215,29 @@ namespace ManajemenSarPras
                 using (var conn = DatabaseConfig.GetConnection())
                 {
                     if (conn == null) return;
+                    string query = @"SELECT * FROM [dbo].[vwMaintenanceHistory]";
 
-                    string query = @"
-                        SELECT * FROM [dbo].[vwMaintenanceHistory]";
-
-                    using (SqlDataAdapter da = new SqlDataAdapter(query, conn))
+                    if (!string.IsNullOrEmpty(keyword))
                     {
-                        dtMaint = new DataTable();
-                        da.Fill(dtMaint);
-                        bsMaintenance.DataSource = dtMaint;
-                        dataGridView1.DataSource = bsMaintenance;
-                        bindingNavigator1.BindingSource = bsMaintenance;
+                        query += " WHERE [Aset] LIKE @kw OR [Petugas] LIKE @kw OR [Lokasi] LIKE @kw";
+                    }
 
-                        txtKerusakan.DataBindings.Clear();
-                        txtKerusakan.DataBindings.Add("Text", bsMaintenance, "kerusakan");
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        if (!string.IsNullOrEmpty(keyword)) cmd.Parameters.AddWithValue("@kw", "%" + keyword + "%");
+
+                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                        {
+                            dtMaint = new DataTable();
+                            da.Fill(dtMaint);
+                            bsMaintenance.DataSource = dtMaint;
+                            dataGridView1.DataSource = bsMaintenance;
+
+                            if (dataGridView1.Columns["idKaryawan"] != null) dataGridView1.Columns["idKaryawan"].Visible = false;
+                            if (dataGridView1.Columns["idSemester"] != null) dataGridView1.Columns["idSemester"].Visible = false;
+                            if (dataGridView1.Columns["idDetailBarang"] != null) dataGridView1.Columns["idDetailBarang"].Visible = false;
+                            if (dataGridView1.Columns["idBarang"] != null) dataGridView1.Columns["idBarang"].Visible = false;
+                        }
                     }
                 }
             }
@@ -216,23 +262,23 @@ namespace ManajemenSarPras
 
         private void ResetForm()
         {
-            selectedIdMaintenance = "";
             selectedIdDetailBarang = "";
             selectedIdBarang = "";
-            kondisiLama = -1;
 
             cmbRuangan.Text = "";
             cmbDetailBarang.Text = "";
 
             cmbKaryawan.SelectedIndex = -1;
-            cmbSemester.SelectedIndex = -1;
+            cmbTindakLanjut.SelectedIndex = -1;
 
             txtKerusakan.Clear();
-            txtTindakLanjut.Clear();
             rbBaik.Checked = true;
 
             btnSimpan.Text = "Simpan";
-            btnHapus.Enabled = false;
+            btnSimpan.Enabled = true; // Nyalakan kembali tombol simpan untuk entri baru
+            btnHapus.Enabled = false; // Matikan total tombol hapus
+
+            AutoSelectActiveSemester();
         }
 
         private void btnReset_Click(object sender, EventArgs e)
@@ -246,17 +292,18 @@ namespace ManajemenSarPras
         {
             if (e.RowIndex >= 0)
             {
+                bsBarang.Position = e.RowIndex;
                 DataRowView row = (DataRowView)bsBarang.Current;
 
                 selectedIdDetailBarang = row["ID Detail"].ToString();
                 selectedIdBarang = row["idBarang"].ToString();
-                kondisiLama = -1;
 
                 cmbDetailBarang.Text = row["Aset"].ToString();
                 cmbRuangan.Text = row["Lokasi"].ToString();
 
                 btnSimpan.Text = "Simpan";
-                
+                btnSimpan.Enabled = true; // Siap melayani input data baru
+                AutoSelectActiveSemester();
             }
         }
 
@@ -264,48 +311,28 @@ namespace ManajemenSarPras
         {
             if (e.RowIndex >= 0)
             {
-                DataRowView row = (DataRowView)bsBarang.Current;
+                // MODE NYIMAK (READ-ONLY VIEW)
+                bsMaintenance.Position = e.RowIndex;
+                DataRowView row = (DataRowView)bsMaintenance.Current;
 
-                // buat ambil id kalo mau update/delete
-                selectedIdMaintenance = row["ID"].ToString();
-                selectedIdDetailBarang = row["idDetailBarang"].ToString();
-                selectedIdBarang = row["idBarang"].ToString();
+                // Tampilkan data ke control UI biar user bisa baca detail riwayatnya
+                txtKerusakan.Text = row["Kerusakan"].ToString();
+                string valTindakLanjut = row["Tindak Lanjut"].ToString();
+                cmbTindakLanjut.SelectedIndex = cmbTindakLanjut.Items.Contains(valTindakLanjut) ? cmbTindakLanjut.Items.IndexOf(valTindakLanjut) : -1;
 
-                // radio button
-                kondisiLama = row["Status"].ToString() == "Baik" ? 1 : 0;
-                if (kondisiLama == 1) rbBaik.Checked = true;
+                if (row["idKaryawan"] != DBNull.Value) cmbKaryawan.SelectedValue = row["idKaryawan"].ToString();
+
+                string statusKondisi = row["Status"].ToString();
+                if (statusKondisi == "Baik") rbBaik.Checked = true;
                 else rbRusak.Checked = true;
 
                 cmbDetailBarang.Text = row["Aset"].ToString();
                 cmbRuangan.Text = row["Lokasi"].ToString();
 
-                btnSimpan.Text = "Update";
-                btnHapus.Enabled = true;
-            }
-        }
-
-        private void ExecuteStockUpdate(SqlConnection conn, SqlTransaction trans, string idB, int diff)
-        {
-            if (diff < 0)
-            {
-                string checkQuery = "SELECT stok FROM [master].[barang] WHERE idBarang = @id";
-                using (SqlCommand cCmd = new SqlCommand(checkQuery, conn, trans))
-                {
-                    cCmd.Parameters.AddWithValue("@id", idB);
-                    int currentStok = Convert.ToInt32(cCmd.ExecuteScalar());
-                    if (currentStok < Math.Abs(diff))
-                    {
-                        throw new Exception("Stok Master tidak mencukupi untuk memproses penyusutan akibat kerusakan aset.");
-                    }
-                }
-            }
-
-            string updateQuery = "UPDATE [master].[barang] SET stok = stok + @diff WHERE idBarang = @idB";
-            using (SqlCommand cmd = new SqlCommand(updateQuery, conn, trans))
-            {
-                cmd.Parameters.AddWithValue("@diff", diff);
-                cmd.Parameters.AddWithValue("@idB", idB);
-                cmd.ExecuteNonQuery();
+                // KRUSIAL PROTEKSI: Kunci tombol simpan agar tidak bisa melakukan kecurangan "UPDATE"
+                btnSimpan.Enabled = false;
+                btnSimpan.Text = "Riwayat Terkunci (No Update)";
+                btnHapus.Enabled = false;
             }
         }
 
@@ -313,103 +340,56 @@ namespace ManajemenSarPras
         {
             if (string.IsNullOrWhiteSpace(selectedIdDetailBarang) || cmbKaryawan.SelectedValue == null || cmbSemester.SelectedValue == null)
             {
-                MessageBox.Show("Silakan pilih Data Aset dari tabel di samping kanan, lalu lengkapi Petugas dan Semester.", "Validasi Ketat", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Silakan pilih Data Aset dari tabel di samping kanan, lalu lengkapi Petugas dan Semester.", "Validasi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (rbRusak.Checked && cmbTindakLanjut.SelectedIndex == -1)
+            {
+                MessageBox.Show("Untuk aset rusak, silakan pilih Tindak Lanjut ('Diganti' / 'Diperbaiki') terlebih dahulu!", "Validasi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             int kondisiBaru = rbBaik.Checked ? 1 : 0;
+            string tindakLanjutValue = rbBaik.Checked ? "-" : cmbTindakLanjut.SelectedItem.ToString();
 
             try
             {
                 using (var conn = DatabaseConfig.GetConnection())
                 {
                     if (conn == null) return;
-                    conn.Open();
 
-                    SqlTransaction transaction = conn.BeginTransaction();
-
-                    try
+                    // Kodingan murni dipaksa meneruskan parameter NULL pada @idM (Selalu jalanin Insert Baru)
+                    using (SqlCommand cmd = new SqlCommand("[dbo].[sp_SaveMaintenance]", conn))
                     {
-                        bool isEdit = !string.IsNullOrEmpty(selectedIdMaintenance);
-                        string query = @"[dbo].[sp_SaveMaintenance]";
+                        cmd.CommandType = CommandType.StoredProcedure;
 
-                        using (SqlCommand cmd =new SqlCommand(query, conn, transaction))
-                        {
-                            // set commandtype ke sp
-                            cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("@idM", DBNull.Value); // Mutlak selalu INSERT log baru
+                        cmd.Parameters.AddWithValue("@idK", cmbKaryawan.SelectedValue);
+                        cmd.Parameters.AddWithValue("@idD", selectedIdDetailBarang);
+                        cmd.Parameters.AddWithValue("@idB", selectedIdBarang);
+                        cmd.Parameters.AddWithValue("@tgl", dtpTglCek.Value.Date);
+                        cmd.Parameters.AddWithValue("@kon", kondisiBaru);
+                        cmd.Parameters.AddWithValue("@ker", rbBaik.Checked ? "-" : txtKerusakan.Text.Trim());
+                        cmd.Parameters.AddWithValue("@tin", tindakLanjutValue);
+                        cmd.Parameters.AddWithValue("@smt", cmbSemester.SelectedValue);
 
-                            if (isEdit)
-                                cmd.Parameters.AddWithValue("@idM", selectedIdMaintenance);
-                            else
-                                cmd.Parameters.AddWithValue("@idM", DBNull.Value);
-
-                            cmd.Parameters.AddWithValue("@idK", cmbKaryawan.SelectedValue);
-                            cmd.Parameters.AddWithValue("@idD", selectedIdDetailBarang);
-                            cmd.Parameters.AddWithValue("@idB", selectedIdBarang); // Parameter baru buat update stok otomatis
-                            cmd.Parameters.AddWithValue("@tgl", dtpTglCek.Value.Date);
-                            cmd.Parameters.AddWithValue("@kon", kondisiBaru);
-                            cmd.Parameters.AddWithValue("@ker", rbBaik.Checked ? "-" : txtKerusakan.Text.Trim());
-                            cmd.Parameters.AddWithValue("@tin", txtTindakLanjut.Text.Trim());
-                            cmd.Parameters.AddWithValue("@smt", cmbSemester.SelectedValue);
-
-                            cmd.ExecuteNonQuery();
-                        }
-
-                        transaction.Commit();
-                        MessageBox.Show($"Log Maintenance berhasil {(isEdit ? "diperbarui" : "disimpan")} dan stok telah disinkronisasi!", "Operasi Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        RefreshSemuaTabel();
-                        ResetForm();
+                        cmd.ExecuteNonQuery();
                     }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        MessageBox.Show(ex.Message, "Integritas Sistem Menolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    }
+
+                    MessageBox.Show("Log Riwayat Cek Maintenance Berhasil Disimpan Permanen!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    RefreshSemuaTabel();
+                    ResetForm();
                 }
             }
-            catch (Exception ex) { MessageBox.Show("Fatal Database Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
-        }
-
-        private void btnHapus_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrEmpty(selectedIdMaintenance)) return;
-
-            if (MessageBox.Show("Anda yakin ingin menghapus log maintenance ini secara permanen?", "Konfirmasi Destruktif", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            catch (SqlException ex)
             {
-                try
-                {
-                    using (var conn = DatabaseConfig.GetConnection())
-                    {
-                        if (conn == null) return;
-                        conn.Open();
-
-                        SqlTransaction transaction = conn.BeginTransaction();
-
-                        try
-                        {
-                            using (SqlCommand cmd = new SqlCommand("[dbo].[sp_DeleteMaintenance]", conn, transaction))
-                            {
-                                cmd.CommandType = CommandType.StoredProcedure; // deklarasi sp
-                                cmd.Parameters.AddWithValue("@idM", selectedIdMaintenance);
-
-                                cmd.ExecuteNonQuery();
-                            }
-
-                            transaction.Commit();
-                            MessageBox.Show("log maintenance berhasil dihapus dan pemulihan stok berhasil.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                            RefreshSemuaTabel();
-                            ResetForm();
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            MessageBox.Show(ex.Message, "Integritas Sistem Menolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        }
-                    }
-                }
-                catch (Exception ex) { MessageBox.Show("Gagal menghapus: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+                MessageBox.Show("Ditolak Sistem: " + ex.Message, "Gagal Proteksi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Fatal Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

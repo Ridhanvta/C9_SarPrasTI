@@ -53,9 +53,6 @@
             this.bindingNavigatorMoveLastItem = new System.Windows.Forms.ToolStripButton();
             this.bindingNavigatorSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.bindingSource1 = new System.Windows.Forms.BindingSource(this.components);
-            this.cmbTahun = new System.Windows.Forms.ComboBox();
-            this.cmbJenis = new System.Windows.Forms.ComboBox();
-            this.label2 = new System.Windows.Forms.Label();
             this.satprasDBDataSet = new ManajemenSarPras.satprasDBDataSet();
             this.usersBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.usersTableAdapter = new ManajemenSarPras.satprasDBDataSetTableAdapters.usersTableAdapter();
@@ -144,7 +141,7 @@
             // 
             // txtTahunAjaran
             // 
-            this.txtTahunAjaran.Location = new System.Drawing.Point(89, 107);
+            this.txtTahunAjaran.Location = new System.Drawing.Point(87, 200);
             this.txtTahunAjaran.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtTahunAjaran.Name = "txtTahunAjaran";
             this.txtTahunAjaran.Size = new System.Drawing.Size(242, 35);
@@ -295,35 +292,6 @@
             this.bindingNavigatorSeparator2.Name = "bindingNavigatorSeparator2";
             this.bindingNavigatorSeparator2.Size = new System.Drawing.Size(6, 31);
             // 
-            // cmbTahun
-            // 
-            this.cmbTahun.DataSource = this.satprasDBDataSet;
-            this.cmbTahun.FormattingEnabled = true;
-            this.cmbTahun.Location = new System.Drawing.Point(89, 203);
-            this.cmbTahun.Name = "cmbTahun";
-            this.cmbTahun.Size = new System.Drawing.Size(242, 24);
-            this.cmbTahun.TabIndex = 44;
-            // 
-            // cmbJenis
-            // 
-            this.cmbJenis.FormattingEnabled = true;
-            this.cmbJenis.Items.AddRange(new object[] {
-            "Ganjil ",
-            "Genap"});
-            this.cmbJenis.Location = new System.Drawing.Point(89, 164);
-            this.cmbJenis.Name = "cmbJenis";
-            this.cmbJenis.Size = new System.Drawing.Size(242, 24);
-            this.cmbJenis.TabIndex = 45;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(20, 156);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(48, 32);
-            this.label2.TabIndex = 46;
-            this.label2.Text = "Ganjil/\r\nGenap";
-            // 
             // satprasDBDataSet
             // 
             this.satprasDBDataSet.DataSetName = "satprasDBDataSet";
@@ -352,9 +320,6 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(932, 450);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.cmbJenis);
-            this.Controls.Add(this.cmbTahun);
             this.Controls.Add(this.bindingNavigator1);
             this.Controls.Add(this.txtCari);
             this.Controls.Add(this.label1);
@@ -408,9 +373,6 @@
         private System.Windows.Forms.ToolStripButton bindingNavigatorMoveLastItem;
         private System.Windows.Forms.ToolStripSeparator bindingNavigatorSeparator2;
         private System.Windows.Forms.BindingSource bindingSource1;
-        private System.Windows.Forms.ComboBox cmbTahun;
-        private System.Windows.Forms.ComboBox cmbJenis;
-        private System.Windows.Forms.Label label2;
         private satprasDBDataSet satprasDBDataSet;
         private System.Windows.Forms.BindingSource usersBindingSource;
         private satprasDBDataSetTableAdapters.usersTableAdapter usersTableAdapter;

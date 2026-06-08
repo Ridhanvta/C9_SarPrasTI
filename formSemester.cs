@@ -8,14 +8,11 @@ namespace ManajemenSarPras
 {
     public partial class formSemester : Form
     {
-        private bool isEditMode = false;
-        private string originalIdSemester = "";
-
         public formSemester()
         {
             InitializeComponent();
 
-            // Mempertahankan struktur Hardcode Event Binding sesuai permintaan Anda
+            // Mempertahankan struktur Hardcode Event Binding
             this.Load += new EventHandler(formSemester_Load);
             this.dataGridView1.CellClick += new DataGridViewCellEventHandler(dataGridView1_CellClick);
             this.txtCari.TextChanged += new EventHandler(txtCari_TextChanged);
@@ -28,23 +25,40 @@ namespace ManajemenSarPras
             this.Hide();
         }
 
-
-
         private void formSemester_Load(object sender, EventArgs e)
         {
             try
             {
-            // TODO: This line of code loads data into the 'satprasDBDataSet.semester' table. You can move, or remove it, as needed.
-            this.semesterTableAdapter.Fill(this.satprasDBDataSet.semester);
-            // TODO: This line of code loads data into the 'satprasDBDataSet.users' table. You can move, or remove it, as needed.
-            this.usersTableAdapter.Fill(this.satprasDBDataSet.users);
-            LoadDataSemester();
-            ResetForm();
+                txtTahunAjaran.ReadOnly = true; // Kunci textbox dari ketikan manual
+                LoadDataSemester();
+                ResetForm();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error saat load form: " + ex.Message, "gabisa load form semester", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private string GetActiveSemesterFromSystem()
+        {
+            int tahunSekarang = DateTime.Now.Year;
+            int bulanSekarang = DateTime.Now.Month;
+
+            string tipeSemester;
+            string tahunAjaran;
+
+            if (bulanSekarang >= 7)
+            {
+                tipeSemester = "Ganjil";
+                tahunAjaran = $"{tahunSekarang}/{tahunSekarang + 1}";
+            }
+            else
+            {
+                tipeSemester = "Genap";
+                tahunAjaran = $"{tahunSekarang - 1}/{tahunSekarang}";
+            }
+
+            return $"{tahunAjaran} ({tipeSemester})";
         }
 
         private void LoadDataSemester(string keyword = "")
@@ -56,46 +70,41 @@ namespace ManajemenSarPras
                     if (conn == null) return;
                     DataTable dt = new DataTable();
 
-                    // Menggunakan VIEW & Stored Procedure sesuai ketentuan
                     if (string.IsNullOrEmpty(keyword))
                     {
                         string query = "SELECT * FROM master.vw_DataSemester";
-                        SqlDataAdapter da = new SqlDataAdapter(query, conn);
-                        da.Fill(dt);
+                        using (SqlCommand cmd = new SqlCommand(query, conn))
+                        {
+                            SqlDataAdapter da = new SqlDataAdapter(cmd);
+                            da.Fill(dt);
+                        }
                     }
                     else
                     {
-                        SqlCommand cmd = new SqlCommand("master.sp_ManageSemester", conn);
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.AddWithValue("@Action", "SEARCH");
-                        cmd.Parameters.AddWithValue("@tahunAjaran", keyword);
-                        SqlDataAdapter da = new SqlDataAdapter(cmd);
-                        da.Fill(dt);
+                        string query = "SELECT * FROM master.vw_DataSemester WHERE [Tahun Ajaran] LIKE @keyword";
+                        using (SqlCommand cmd = new SqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@keyword", "%" + keyword + "%");
+                            SqlDataAdapter da = new SqlDataAdapter(cmd);
+                            da.Fill(dt);
+                        }
                     }
 
-                    // --- SOLUSI OTOMATISASI BINDING ---
-
-                    // 1. Bersihkan binding lama agar tidak terjadi tabrakan data
                     txtTahunAjaran.DataBindings.Clear();
-
-                    // 2. Isi data ke BindingSource
                     bindingSource1.DataSource = dt;
 
-                    // 3. Sinkronkan kontrol Navigator dan Grid ke satu sumber
                     bindingNavigator1.BindingSource = bindingSource1;
                     dataGridView1.DataSource = bindingSource1;
 
-                    // 4. Lakukan Binding ke TextBox secara eksplisit
-                    // Pastikan nama kolom "[Tahun Ajaran]" sesuai dengan VIEW di SQL
                     txtTahunAjaran.DataBindings.Add("Text", bindingSource1, "Tahun Ajaran", true, DataSourceUpdateMode.OnPropertyChanged);
 
-                    // 5. PAKSA REFRESH: Agar data baris pertama langsung muncul di TextBox saat Load
                     if (dt.Rows.Count > 0)
                     {
                         bindingSource1.MoveFirst();
-                        // Ambil ID baris pertama untuk state awal jika diperlukan
-                        DataRowView firstRow = (DataRowView)bindingSource1.Current;
-                        originalIdSemester = firstRow["ID"].ToString();
+                    }
+                    else
+                    {
+                        txtTahunAjaran.Text = GetActiveSemesterFromSystem();
                     }
 
                     if (dataGridView1.Columns["ID"] != null) dataGridView1.Columns["ID"].Visible = false;
@@ -106,23 +115,16 @@ namespace ManajemenSarPras
 
         private void ResetForm()
         {
-            // Jangan bersihkan binding di sini agar teks tetap muncul saat navigasi
-            isEditMode = false;
-            originalIdSemester = "";
-
-            btnTambah.Text = "Tambah";
-            btnUpdate.Text = "Reset Text";
-            btnDelete.Enabled = false;
-
-            // Cukup kosongkan teks jika ingin input data baru, 
-            // namun ingat ini akan memutus binding sementara jika tidak hati-hati
-            txtTahunAjaran.Focus();
+            btnTambah.Text = "Tambah Semester Aktif";
+            btnTambah.Enabled = true; // Selalu nyala untuk mode insert data baru
+            txtTahunAjaran.Text = GetActiveSemesterFromSystem();
         }
 
         private void btnUpdate_Click(object sender, EventArgs e)
         {
+            // Sekarang tombol ini murni berfungsi sebagai "Reset/Clear" UI saja
             ResetForm();
-            LoadDataSemester(); // Reload untuk mengaktifkan kembali binding otomatis
+            LoadDataSemester();
         }
 
         private void txtCari_TextChanged(object sender, EventArgs e)
@@ -134,42 +136,50 @@ namespace ManajemenSarPras
         {
             if (e.RowIndex >= 0)
             {
-                // Biarkan BindingSource mengatur posisi, TextBox akan mengikuti otomatis
                 bindingSource1.Position = e.RowIndex;
 
-                DataRowView currentRow = (DataRowView)bindingSource1.Current;
-                originalIdSemester = currentRow["ID"].ToString();
-
-                isEditMode = true;
-                btnTambah.Text = "Update Data";
-                btnDelete.Enabled = true;
+                // Kunci tombol tambah jika user nge-klik data lama di grid (karena tidak boleh di-update)
+                btnTambah.Enabled = false;
+                btnTambah.Text = "Data Terkunci (No Update)";
             }
         }
 
         private void btnTambah_Click(object sender, EventArgs e)
         {
-            // Simpan perubahan dari UI ke BindingSource sebelum ke database
             bindingSource1.EndEdit();
+            string inputTahun = GetActiveSemesterFromSystem();
 
-            string inputTahun = txtTahunAjaran.Text.Trim();
-
-            if (string.IsNullOrEmpty(inputTahun)) return;
             try
             {
                 using (var conn = DatabaseConfig.GetConnection())
                 {
                     if (conn == null) return;
 
+                    // VALIDASI ANTI-DUPLIKAT
+                    string checkQuery = "SELECT COUNT(*) FROM [master].[semester] WHERE [tahunAjaran] = @tahunAjaran";
+                    using (SqlCommand checkCmd = new SqlCommand(checkQuery, conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("@tahunAjaran", inputTahun);
+                        int count = (int)checkCmd.ExecuteScalar();
+
+                        if (count > 0)
+                        {
+                            MessageBox.Show($"Semester '{inputTahun}' sudah terdaftar di database!",
+                                            "Validasi Tolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+                    }
+
+                    // Murni hanya menjalankan aksi INSERT saja ke Stored Procedure
                     using (SqlCommand cmd = new SqlCommand("master.sp_ManageSemester", conn))
                     {
                         cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.AddWithValue("@Action", isEditMode ? "UPDATE" : "INSERT");
+                        cmd.Parameters.AddWithValue("@Action", "INSERT");
                         cmd.Parameters.AddWithValue("@tahunAjaran", inputTahun);
-                        if (isEditMode) cmd.Parameters.AddWithValue("@idSemester", originalIdSemester);
 
                         cmd.ExecuteNonQuery();
 
-                        MessageBox.Show("Operasi Berhasil!");
+                        MessageBox.Show("Semester Aktif Berhasil Ditambahkan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         LoadDataSemester();
                         ResetForm();
                     }
@@ -178,36 +188,10 @@ namespace ManajemenSarPras
             catch (Exception ex) { MessageBox.Show("Error: " + ex.Message); }
         }
 
-
-
+        // Fungsi Hapus dikosongkan total demi keamanan data integritas kampus
         private void btnDelete_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(originalIdSemester)) return;
-
-            if (MessageBox.Show("Hapus data?", "Konfirmasi", MessageBoxButtons.YesNo) == DialogResult.Yes)
-            {
-                try
-                {
-                    using (var conn = DatabaseConfig.GetConnection())
-                    {
-                        if (conn == null) return;
-                        using (SqlCommand cmd = new SqlCommand("master.sp_ManageSemester", conn))
-                        {
-                            cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.Parameters.AddWithValue("@Action", "DELETE");
-                            cmd.Parameters.AddWithValue("@idSemester", originalIdSemester);
-                            cmd.ExecuteNonQuery();
-
-                            LoadDataSemester();
-                            ResetForm();
-                        }
-                    }
-                }
-                catch (SqlException ex)
-                {
-                    if (ex.Number == 547) MessageBox.Show("Data masih digunakan di tabel lain!");
-                }
-            }
+            MessageBox.Show("Kebijakan Sistem: Data Semester yang sudah masuk tidak dapat dihapus!", "Akses Ditolak", MessageBoxButtons.OK, MessageBoxIcon.Stop);
         }
     }
 }
