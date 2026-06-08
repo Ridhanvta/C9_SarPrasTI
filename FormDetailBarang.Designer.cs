@@ -54,98 +54,106 @@
             this.dgvDetail.AllowUserToAddRows = false;
             this.dgvDetail.AllowUserToDeleteRows = false;
             this.dgvDetail.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvDetail.Location = new System.Drawing.Point(379, 170);
+            this.dgvDetail.Location = new System.Drawing.Point(337, 136);
+            this.dgvDetail.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.dgvDetail.Name = "dgvDetail";
             this.dgvDetail.ReadOnly = true;
             this.dgvDetail.RowHeadersWidth = 62;
             this.dgvDetail.RowTemplate.Height = 28;
-            this.dgvDetail.Size = new System.Drawing.Size(548, 371);
+            this.dgvDetail.Size = new System.Drawing.Size(487, 297);
             this.dgvDetail.TabIndex = 0;
             // 
             // labelNamaBarang
             // 
             this.labelNamaBarang.AutoSize = true;
-            this.labelNamaBarang.Location = new System.Drawing.Point(17, 263);
+            this.labelNamaBarang.Location = new System.Drawing.Point(15, 210);
             this.labelNamaBarang.Name = "labelNamaBarang";
-            this.labelNamaBarang.Size = new System.Drawing.Size(109, 20);
+            this.labelNamaBarang.Size = new System.Drawing.Size(86, 16);
             this.labelNamaBarang.TabIndex = 1;
             this.labelNamaBarang.Text = "SPESIFIKASI";
             // 
             // txtSpesifikasi
             // 
-            this.txtSpesifikasi.Location = new System.Drawing.Point(132, 251);
+            this.txtSpesifikasi.Location = new System.Drawing.Point(117, 201);
+            this.txtSpesifikasi.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtSpesifikasi.Name = "txtSpesifikasi";
-            this.txtSpesifikasi.Size = new System.Drawing.Size(219, 43);
+            this.txtSpesifikasi.Size = new System.Drawing.Size(195, 35);
             this.txtSpesifikasi.TabIndex = 3;
             this.txtSpesifikasi.Text = "";
             // 
             // labelGedung
             // 
             this.labelGedung.AutoSize = true;
-            this.labelGedung.Location = new System.Drawing.Point(17, 323);
+            this.labelGedung.Location = new System.Drawing.Point(15, 258);
             this.labelGedung.Name = "labelGedung";
-            this.labelGedung.Size = new System.Drawing.Size(81, 20);
+            this.labelGedung.Size = new System.Drawing.Size(66, 16);
             this.labelGedung.TabIndex = 4;
             this.labelGedung.Text = "GEDUNG";
             // 
             // txtIdDetail
             // 
-            this.txtIdDetail.Location = new System.Drawing.Point(132, 188);
+            this.txtIdDetail.Location = new System.Drawing.Point(117, 150);
+            this.txtIdDetail.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtIdDetail.Name = "txtIdDetail";
-            this.txtIdDetail.Size = new System.Drawing.Size(219, 43);
+            this.txtIdDetail.Size = new System.Drawing.Size(195, 35);
             this.txtIdDetail.TabIndex = 7;
             this.txtIdDetail.Text = "";
             // 
             // labelIdDetailBarang
             // 
             this.labelIdDetailBarang.AutoSize = true;
-            this.labelIdDetailBarang.Location = new System.Drawing.Point(17, 191);
+            this.labelIdDetailBarang.Location = new System.Drawing.Point(15, 153);
             this.labelIdDetailBarang.Name = "labelIdDetailBarang";
-            this.labelIdDetailBarang.Size = new System.Drawing.Size(87, 40);
+            this.labelIdDetailBarang.Size = new System.Drawing.Size(70, 32);
             this.labelIdDetailBarang.TabIndex = 6;
             this.labelIdDetailBarang.Text = "ID DETAIL\r\nBARANG";
             // 
             // cmbRuangan
             // 
             this.cmbRuangan.FormattingEnabled = true;
-            this.cmbRuangan.Location = new System.Drawing.Point(132, 370);
+            this.cmbRuangan.Location = new System.Drawing.Point(117, 296);
+            this.cmbRuangan.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.cmbRuangan.Name = "cmbRuangan";
-            this.cmbRuangan.Size = new System.Drawing.Size(219, 28);
+            this.cmbRuangan.Size = new System.Drawing.Size(195, 24);
             this.cmbRuangan.TabIndex = 8;
             // 
             // cmbGedung
             // 
             this.cmbGedung.FormattingEnabled = true;
-            this.cmbGedung.Location = new System.Drawing.Point(132, 320);
+            this.cmbGedung.Location = new System.Drawing.Point(117, 256);
+            this.cmbGedung.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.cmbGedung.Name = "cmbGedung";
-            this.cmbGedung.Size = new System.Drawing.Size(219, 28);
+            this.cmbGedung.Size = new System.Drawing.Size(195, 24);
             this.cmbGedung.TabIndex = 9;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(17, 373);
+            this.label1.Location = new System.Drawing.Point(15, 298);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(90, 20);
+            this.label1.Size = new System.Drawing.Size(75, 16);
             this.label1.TabIndex = 10;
             this.label1.Text = "RUANGAN";
             // 
             // btnKembali
             // 
             this.btnKembali.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnKembali.Location = new System.Drawing.Point(23, 12);
+            this.btnKembali.Location = new System.Drawing.Point(20, 10);
+            this.btnKembali.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnKembali.Name = "btnKembali";
-            this.btnKembali.Size = new System.Drawing.Size(103, 44);
+            this.btnKembali.Size = new System.Drawing.Size(92, 35);
             this.btnKembali.TabIndex = 11;
             this.btnKembali.Text = "Kembali";
             this.btnKembali.UseVisualStyleBackColor = true;
+            this.btnKembali.Click += new System.EventHandler(this.btnKembali_Click);
             // 
             // btnSimpan
             // 
             this.btnSimpan.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSimpan.Location = new System.Drawing.Point(21, 426);
+            this.btnSimpan.Location = new System.Drawing.Point(19, 341);
+            this.btnSimpan.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnSimpan.Name = "btnSimpan";
-            this.btnSimpan.Size = new System.Drawing.Size(163, 55);
+            this.btnSimpan.Size = new System.Drawing.Size(145, 44);
             this.btnSimpan.TabIndex = 12;
             this.btnSimpan.Text = "Tambah Detail \r\nBarang";
             this.btnSimpan.UseVisualStyleBackColor = true;
@@ -153,9 +161,10 @@
             // btnBatal
             // 
             this.btnBatal.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnBatal.Location = new System.Drawing.Point(190, 426);
+            this.btnBatal.Location = new System.Drawing.Point(169, 341);
+            this.btnBatal.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnBatal.Name = "btnBatal";
-            this.btnBatal.Size = new System.Drawing.Size(161, 55);
+            this.btnBatal.Size = new System.Drawing.Size(143, 44);
             this.btnBatal.TabIndex = 13;
             this.btnBatal.Text = "Reset Text";
             this.btnBatal.UseVisualStyleBackColor = true;
@@ -163,28 +172,30 @@
             // btnHapus
             // 
             this.btnHapus.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnHapus.Location = new System.Drawing.Point(107, 489);
+            this.btnHapus.Location = new System.Drawing.Point(95, 391);
+            this.btnHapus.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnHapus.Name = "btnHapus";
-            this.btnHapus.Size = new System.Drawing.Size(161, 55);
+            this.btnHapus.Size = new System.Drawing.Size(143, 44);
             this.btnHapus.TabIndex = 14;
             this.btnHapus.Text = "Hapus Detail\r\nBarang";
             this.btnHapus.UseVisualStyleBackColor = true;
             // 
             // txtCari
             // 
-            this.txtCari.Location = new System.Drawing.Point(494, 115);
+            this.txtCari.Location = new System.Drawing.Point(439, 92);
+            this.txtCari.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtCari.Name = "txtCari";
-            this.txtCari.Size = new System.Drawing.Size(433, 43);
+            this.txtCari.Size = new System.Drawing.Size(385, 35);
             this.txtCari.TabIndex = 15;
             this.txtCari.Text = "";
             // 
             // labelCariDetailBarang
             // 
             this.labelCariDetailBarang.AutoSize = true;
-            this.labelCariDetailBarang.Location = new System.Drawing.Point(380, 118);
+            this.labelCariDetailBarang.Location = new System.Drawing.Point(338, 94);
             this.labelCariDetailBarang.Margin = new System.Windows.Forms.Padding(3, 0, 0, 0);
             this.labelCariDetailBarang.Name = "labelCariDetailBarang";
-            this.labelCariDetailBarang.Size = new System.Drawing.Size(113, 40);
+            this.labelCariDetailBarang.Size = new System.Drawing.Size(91, 32);
             this.labelCariDetailBarang.TabIndex = 16;
             this.labelCariDetailBarang.Text = "CARI DETAIL \r\nBARANG";
             // 
@@ -192,34 +203,35 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Stencil", 16F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(268, 46);
+            this.label2.Location = new System.Drawing.Point(238, 37);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(379, 26);
+            this.label2.Size = new System.Drawing.Size(453, 32);
             this.label2.TabIndex = 18;
             this.label2.Text = "PENGELOLAHAN DETAIL BARANG";
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(17, 121);
+            this.label3.Location = new System.Drawing.Point(15, 97);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(78, 40);
+            this.label3.Size = new System.Drawing.Size(64, 32);
             this.label3.TabIndex = 19;
             this.label3.Text = "NAMA\r\nBARANG";
             // 
             // cmbBarang
             // 
             this.cmbBarang.FormattingEnabled = true;
-            this.cmbBarang.Location = new System.Drawing.Point(132, 127);
+            this.cmbBarang.Location = new System.Drawing.Point(117, 102);
+            this.cmbBarang.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.cmbBarang.Name = "cmbBarang";
-            this.cmbBarang.Size = new System.Drawing.Size(219, 28);
+            this.cmbBarang.Size = new System.Drawing.Size(195, 24);
             this.cmbBarang.TabIndex = 20;
             // 
             // FormDetailBarang
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(939, 563);
+            this.ClientSize = new System.Drawing.Size(835, 450);
             this.Controls.Add(this.cmbBarang);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
@@ -238,6 +250,7 @@
             this.Controls.Add(this.txtSpesifikasi);
             this.Controls.Add(this.labelNamaBarang);
             this.Controls.Add(this.dgvDetail);
+            this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.Name = "FormDetailBarang";
             this.Text = "FormDetailBarang";
             ((System.ComponentModel.ISupportInitialize)(this.dgvDetail)).EndInit();

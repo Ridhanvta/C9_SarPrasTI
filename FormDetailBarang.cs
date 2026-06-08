@@ -28,8 +28,8 @@ namespace ManajemenSarPras
 
         private void btnKembali_Click(object sender, EventArgs e)
         {
-            kelolaBarang masterForm = new kelolaBarang();
-            masterForm.Show();
+            kelolaBarang kelola = new kelolaBarang();
+            kelola.Show();
             this.Hide();
         }
 

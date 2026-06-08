@@ -342,6 +342,7 @@ namespace ManajemenSarPras
                             cmd.Parameters.AddWithValue("@smt", cmbSemester.SelectedValue);
 
                             cmd.ExecuteNonQuery();
+                            conn.Close();
                         }
 
                         transaction.Commit();
@@ -355,6 +356,8 @@ namespace ManajemenSarPras
                         transaction.Rollback();
                         MessageBox.Show(ex.Message, "Integritas Sistem Menolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
+
+                
                 }
             }
             catch (Exception ex) { MessageBox.Show("Fatal Database Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
