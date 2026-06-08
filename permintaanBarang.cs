@@ -449,5 +449,10 @@ namespace ManajemenSarPras
         private void permintaanBarang_Load_1(object sender, EventArgs e) { }
         private void label4_Click(object sender, EventArgs e) { }
         private void stockBarang_Click(object sender, EventArgs e) { }
+
+        private void permintaanBarang_Load_2(object sender, EventArgs e)
+        {
+
+        }
     }
 }
