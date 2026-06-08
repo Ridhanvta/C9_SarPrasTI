@@ -28,10 +28,23 @@ namespace ManajemenSarPras
             this.Hide();
         }
 
+
+
         private void formSemester_Load(object sender, EventArgs e)
         {
+            try
+            {
+            // TODO: This line of code loads data into the 'satprasDBDataSet.semester' table. You can move, or remove it, as needed.
+            this.semesterTableAdapter.Fill(this.satprasDBDataSet.semester);
+            // TODO: This line of code loads data into the 'satprasDBDataSet.users' table. You can move, or remove it, as needed.
+            this.usersTableAdapter.Fill(this.satprasDBDataSet.users);
             LoadDataSemester();
             ResetForm();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saat load form: " + ex.Message, "gabisa load form semester", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void LoadDataSemester(string keyword = "")
@@ -139,13 +152,14 @@ namespace ManajemenSarPras
             bindingSource1.EndEdit();
 
             string inputTahun = txtTahunAjaran.Text.Trim();
-            if (string.IsNullOrEmpty(inputTahun)) return;
 
+            if (string.IsNullOrEmpty(inputTahun)) return;
             try
             {
                 using (var conn = DatabaseConfig.GetConnection())
                 {
                     if (conn == null) return;
+
                     using (SqlCommand cmd = new SqlCommand("master.sp_ManageSemester", conn))
                     {
                         cmd.CommandType = CommandType.StoredProcedure;
@@ -154,8 +168,8 @@ namespace ManajemenSarPras
                         if (isEditMode) cmd.Parameters.AddWithValue("@idSemester", originalIdSemester);
 
                         cmd.ExecuteNonQuery();
-                        MessageBox.Show("Operasi Berhasil!");
 
+                        MessageBox.Show("Operasi Berhasil!");
                         LoadDataSemester();
                         ResetForm();
                     }
@@ -163,6 +177,8 @@ namespace ManajemenSarPras
             }
             catch (Exception ex) { MessageBox.Show("Error: " + ex.Message); }
         }
+
+
 
         private void btnDelete_Click(object sender, EventArgs e)
         {

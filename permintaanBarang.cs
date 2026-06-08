@@ -117,6 +117,8 @@ namespace ManajemenSarPras
                         cmbSemester.DisplayMember = "tahunAjaran";
                         cmbSemester.ValueMember = "idSemester";
                         cmbSemester.DropDownStyle = ComboBoxStyle.DropDownList;
+
+                        cmbSemester.Enabled = false; // disable karena semester otomatis di-generate berdasarkan tanggal laptop
                         cmbSemester.SelectedIndex = -1;
                     }
                 }
@@ -299,68 +301,7 @@ namespace ManajemenSarPras
 
         private void btnSimpan_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtIdBarang.Text) || string.IsNullOrWhiteSpace(txtNma.Text) ||
-                string.IsNullOrWhiteSpace(txtJmlh.Text) || cmbRuangan.SelectedValue == null || cmbSemester.SelectedValue == null)
-            {
-                MessageBox.Show("Seluruh form wajib diisi secara lengkap.", "Validasi Ketat", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (!int.TryParse(txtJmlh.Text.Trim(), out int jumlahBaru) || jumlahBaru <= 0)
-            {
-                MessageBox.Show("Jumlah permintaan harus berupa angka lebih dari 0.", "Validasi Ketat", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            try
-            {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-                    conn.Open();
-
-                    SqlTransaction transaction = conn.BeginTransaction();
-
-                    try
-                    {
-                        bool isEdit = !string.IsNullOrEmpty(selectedIdPermintaan);
-                        string idBarangBaru = txtIdBarang.Text.Trim();
-
-                        using (SqlCommand cmd = new SqlCommand("sp_SavePermintaanBarang", conn, transaction))
-                        {
-                            cmd.CommandType = CommandType.StoredProcedure;
-
-                            if (isEdit)
-                                cmd.Parameters.AddWithValue("@idPB", selectedIdPermintaan);
-                            else
-                                cmd.Parameters.AddWithValue("@idPB", DBNull.Value);
-
-                            cmd.Parameters.AddWithValue("@idB", txtIdBarang.Text.Trim());
-                            cmd.Parameters.AddWithValue("@idR", cmbRuangan.SelectedValue);
-                            cmd.Parameters.AddWithValue("@nama", txtNma.Text.Trim());
-                            cmd.Parameters.AddWithValue("@jml", jumlahBaru);
-                            cmd.Parameters.AddWithValue("@smt", cmbSemester.SelectedValue);
-
-                            cmd.ExecuteNonQuery();
-                            conn.Close();
-                        }
-
-                        transaction.Commit();
-                        MessageBox.Show($"Transaksi permintaan berhasil diproses secara atomik!", "Operasi Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        RefreshSemuaTabel();
-                        ResetForm();
-                    }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        MessageBox.Show(ex.Message, "Integritas Sistem Menolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    }
-
-                
-                }
-            }
-            catch (Exception ex) { MessageBox.Show("Fatal Database Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+            
         }
 
         private void btnHapus_Click(object sender, EventArgs e)
@@ -399,5 +340,112 @@ namespace ManajemenSarPras
 
         private void label4_Click(object sender, EventArgs e) { }
         private void stockBarang_Click(object sender, EventArgs e) { }
+
+        private int GetIdSemesterOtomatis(SqlConnection conn, SqlTransaction transaction)
+        {
+            // 1. Ambil waktu dari laptop
+            DateTime sekarang = DateTime.Now;
+            int bulan = sekarang.Month;
+            int tahun = sekarang.Year;
+            string targetSemester = "";
+
+            // 2. Logika Kalender Kampus
+            // Ganjil = September (9) s/d Januari (1)
+            // Genap = Februari (2) s/d agustus (8)
+            if (bulan >= 9 || bulan == 1)
+            {
+                int tahunAwal = (bulan == 1) ? tahun - 1 : tahun;
+                targetSemester = $"{tahunAwal}/{tahunAwal + 1} Ganjil";
+            }
+            else
+            {
+                targetSemester = $"{tahun - 1}/{tahun} Genap";
+            }
+
+            // 3. Cari idSemester di database berdasarkan string yang dirakit
+            string query = "SELECT idSemester FROM [master].[semester] WHERE tahunAjaran = @TA";
+            using (SqlCommand cmd = new SqlCommand(query, conn, transaction))
+            {
+                cmd.Parameters.AddWithValue("@TA", targetSemester);
+                object result = cmd.ExecuteScalar();
+
+                if (result != null)
+                {
+                    return Convert.ToInt32(result);
+                }
+                else
+                {
+                    // Lempar error kalau kaprodi/admin master belum bikin master data semester ini
+                    throw new Exception($"Tahun ajaran '{targetSemester}' belum terdaftar");
+                }
+            }
+        }
+
+        private void addPeminta_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtIdBarang.Text) || string.IsNullOrWhiteSpace(txtNma.Text) ||
+                string.IsNullOrWhiteSpace(txtJmlh.Text) || cmbRuangan.SelectedValue == null) // semester otomatis dari function diatas
+            {
+                MessageBox.Show("Seluruh form wajib diisi secara lengkap.", "Validasi Ketat", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!int.TryParse(txtJmlh.Text.Trim(), out int jumlahBaru) || jumlahBaru <= 0)
+            {
+                MessageBox.Show("Jumlah permintaan harus berupa angka lebih dari 0.", "Validasi Ketat", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                using (var conn = DatabaseConfig.GetConnection())
+                {
+                    if (conn == null) return;
+
+                    SqlTransaction transaction = conn.BeginTransaction();
+
+                    try
+                    {
+                        int idSemesterAktif = GetIdSemesterOtomatis(conn, transaction);
+                        bool isEdit = !string.IsNullOrEmpty(selectedIdPermintaan);
+                        string idBarangBaru = txtIdBarang.Text.Trim();
+
+                
+                        using (SqlCommand cmd = new SqlCommand("sp_SavePermintaanBarang", conn, transaction))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+
+                            if (isEdit)
+                                cmd.Parameters.AddWithValue("@idPB", selectedIdPermintaan);
+                            else
+                                cmd.Parameters.AddWithValue("@idPB", DBNull.Value);
+
+                            cmd.Parameters.AddWithValue("@idB", txtIdBarang.Text.Trim());
+                            cmd.Parameters.AddWithValue("@idR", cmbRuangan.SelectedValue);
+                            cmd.Parameters.AddWithValue("@nama", txtNma.Text.Trim());
+                            cmd.Parameters.AddWithValue("@jml", jumlahBaru);
+                            cmd.Parameters.AddWithValue("@smt", idSemesterAktif);
+
+                            cmd.ExecuteNonQuery();
+                        } 
+
+                        transaction.Commit();
+                        MessageBox.Show($"Transaksi permintaan berhasil diproses secara atomik!", "Operasi Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        RefreshSemuaTabel();
+                        ResetForm();
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        MessageBox.Show(ex.Message, "Integritas Sistem Menolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Fatal Database Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
     }
 }

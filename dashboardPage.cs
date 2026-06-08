@@ -60,10 +60,10 @@ namespace ManajemenSarPras
         }
 
         // 6. Navigasi ke Semester
-        private void btnNavigasiSemester_Click(object sender, EventArgs e)
+        private void btnSemester_Click(object sender, EventArgs e)
         {
-            formSemester formSem = new formSemester();
-            formSem.Show();
+            formSemester frmSemester = new formSemester();
+            frmSemester.Show();
             this.Hide();
         }
 
