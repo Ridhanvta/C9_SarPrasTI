@@ -16,7 +16,7 @@ namespace ManajemenSarPras
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new dashboardPage());
+            Application.Run(new grafik());
         }
     }
 }

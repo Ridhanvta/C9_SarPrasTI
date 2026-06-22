@@ -27,6 +27,9 @@
             this.btnSemester = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.btnGrafik = new System.Windows.Forms.Button();
+            this.btnReportStok = new System.Windows.Forms.Button();
+            this.btnReportLog = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // kelolaBarang
@@ -93,7 +96,7 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Stencil", 36F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(11, 77);
+            this.label1.Location = new System.Drawing.Point(46, 41);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(751, 71);
             this.label1.TabIndex = 5;
@@ -129,11 +132,50 @@
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
             // 
+            // btnGrafik
+            // 
+            this.btnGrafik.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnGrafik.Location = new System.Drawing.Point(507, 302);
+            this.btnGrafik.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnGrafik.Name = "btnGrafik";
+            this.btnGrafik.Size = new System.Drawing.Size(118, 40);
+            this.btnGrafik.TabIndex = 8;
+            this.btnGrafik.Text = "Grafik";
+            this.btnGrafik.UseVisualStyleBackColor = true;
+            this.btnGrafik.Click += new System.EventHandler(this.btnGrafik_Click);
+            // 
+            // btnReportStok
+            // 
+            this.btnReportStok.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnReportStok.Location = new System.Drawing.Point(341, 302);
+            this.btnReportStok.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnReportStok.Name = "btnReportStok";
+            this.btnReportStok.Size = new System.Drawing.Size(160, 40);
+            this.btnReportStok.TabIndex = 9;
+            this.btnReportStok.Text = "Report Stok";
+            this.btnReportStok.UseVisualStyleBackColor = true;
+            this.btnReportStok.Click += new System.EventHandler(this.btnReportStok_Click);
+            // 
+            // btnReportLog
+            // 
+            this.btnReportLog.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnReportLog.Location = new System.Drawing.Point(155, 302);
+            this.btnReportLog.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnReportLog.Name = "btnReportLog";
+            this.btnReportLog.Size = new System.Drawing.Size(160, 40);
+            this.btnReportLog.TabIndex = 10;
+            this.btnReportLog.Text = "Report Log";
+            this.btnReportLog.UseVisualStyleBackColor = true;
+            this.btnReportLog.Click += new System.EventHandler(this.btnReportLog_Click);
+            // 
             // dashboardPage
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(835, 450);
+            this.ClientSize = new System.Drawing.Size(901, 450);
+            this.Controls.Add(this.btnReportLog);
+            this.Controls.Add(this.btnReportStok);
+            this.Controls.Add(this.btnGrafik);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.btnSemester);
             this.Controls.Add(this.label1);
@@ -161,5 +203,8 @@
         private System.Windows.Forms.Button btnSemester;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
+        private System.Windows.Forms.Button btnGrafik;
+        private System.Windows.Forms.Button btnReportStok;
+        private System.Windows.Forms.Button btnReportLog;
     }
 }

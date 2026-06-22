@@ -14,6 +14,8 @@ namespace ManajemenSarPras
 {
     public partial class dashboardPage : Form
     {
+
+        
         public dashboardPage()
         {
             InitializeComponent();
@@ -89,6 +91,27 @@ namespace ManajemenSarPras
         private void dashboardPage_Load(object sender, EventArgs e)
         {
             // Bisa dikosongkan atau buat narik data statistik ringkas
+        }
+
+        private void btnGrafik_Click(object sender, EventArgs e)
+        {
+            grafik formGrafik = new grafik();
+            formGrafik.Show();
+            this.Hide();
+        }
+
+        private void btnReportLog_Click(object sender, EventArgs e)
+        {
+            reportLog formReportLog = new reportLog();
+            formReportLog.Show();
+            this.Hide();
+        }
+
+        private void btnReportStok_Click(object sender, EventArgs e)
+        {
+            reportStok formReportStok = new reportStok();
+            formReportStok.Show();
+            this.Hide();
         }
     }
 }

@@ -26,8 +26,7 @@ namespace ManajemenSarPras.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=Ridhanvta\\RIDHA;Initial Catalog=satprasDB;User ID=sa;Password=Ridhano" +
-            "vita;TrustServerCertificate=True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Server=tomiskibidi\\TAMA;Database=satprasDB;Trusted_Connection=True;")]
         public string satprasDBConnectionString {
             get {
                 return ((string)(this["satprasDBConnectionString"]));
