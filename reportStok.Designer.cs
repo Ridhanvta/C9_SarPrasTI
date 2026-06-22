@@ -71,7 +71,7 @@
             this.btnLoad.BackColor = System.Drawing.SystemColors.Control;
             this.btnLoad.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnLoad.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnLoad.Location = new System.Drawing.Point(794, 96);
+            this.btnLoad.Location = new System.Drawing.Point(685, 97);
             this.btnLoad.Name = "btnLoad";
             this.btnLoad.Size = new System.Drawing.Size(125, 42);
             this.btnLoad.TabIndex = 3;
@@ -81,17 +81,18 @@
             // dgvReportStok
             // 
             this.dgvReportStok.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvReportStok.Location = new System.Drawing.Point(12, 96);
+            this.dgvReportStok.Location = new System.Drawing.Point(12, 131);
             this.dgvReportStok.Name = "dgvReportStok";
             this.dgvReportStok.RowHeadersWidth = 51;
             this.dgvReportStok.RowTemplate.Height = 24;
-            this.dgvReportStok.Size = new System.Drawing.Size(776, 448);
+            this.dgvReportStok.Size = new System.Drawing.Size(667, 413);
             this.dgvReportStok.TabIndex = 4;
+            this.dgvReportStok.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvReportStok_CellContentClick);
             // 
             // btnCetak
             // 
             this.btnCetak.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCetak.Location = new System.Drawing.Point(794, 144);
+            this.btnCetak.Location = new System.Drawing.Point(685, 145);
             this.btnCetak.Name = "btnCetak";
             this.btnCetak.Size = new System.Drawing.Size(125, 41);
             this.btnCetak.TabIndex = 5;
@@ -101,7 +102,7 @@
             // btnKembali
             // 
             this.btnKembali.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnKembali.Location = new System.Drawing.Point(794, 504);
+            this.btnKembali.Location = new System.Drawing.Point(685, 505);
             this.btnKembali.Name = "btnKembali";
             this.btnKembali.Size = new System.Drawing.Size(125, 40);
             this.btnKembali.TabIndex = 6;
@@ -113,7 +114,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(931, 556);
+            this.ClientSize = new System.Drawing.Size(851, 574);
             this.Controls.Add(this.btnKembali);
             this.Controls.Add(this.btnCetak);
             this.Controls.Add(this.dgvReportStok);
@@ -123,6 +124,7 @@
             this.Controls.Add(this.label1);
             this.Name = "reportStok";
             this.Text = "reportStok";
+            this.Load += new System.EventHandler(this.reportStok_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvReportStok)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

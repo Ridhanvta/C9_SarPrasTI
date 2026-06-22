@@ -28,9 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea4 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend4 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea6 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend6 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series6 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.label1 = new System.Windows.Forms.Label();
             this.cmbTahunAjaran = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -38,7 +39,14 @@
             this.btnLoad = new System.Windows.Forms.Button();
             this.btnReset = new System.Windows.Forms.Button();
             this.btnDashboard = new System.Windows.Forms.Button();
+            this.satprasDBDataSet = new ManajemenSarPras.satprasDBDataSet();
+            this.semesterBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.semesterTableAdapter = new ManajemenSarPras.satprasDBDataSetTableAdapters.semesterTableAdapter();
+            this.semesterBindingSource1 = new System.Windows.Forms.BindingSource(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.chartBarang)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.satprasDBDataSet)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.semesterBindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.semesterBindingSource1)).BeginInit();
             this.SuspendLayout();
             // 
             // label1
@@ -54,7 +62,7 @@
             // cmbTahunAjaran
             // 
             this.cmbTahunAjaran.FormattingEnabled = true;
-            this.cmbTahunAjaran.Location = new System.Drawing.Point(184, 66);
+            this.cmbTahunAjaran.Location = new System.Drawing.Point(205, 66);
             this.cmbTahunAjaran.Name = "cmbTahunAjaran";
             this.cmbTahunAjaran.Size = new System.Drawing.Size(219, 24);
             this.cmbTahunAjaran.TabIndex = 1;
@@ -71,16 +79,16 @@
             // 
             // chartBarang
             // 
-            chartArea4.Name = "ChartArea1";
-            this.chartBarang.ChartAreas.Add(chartArea4);
-            legend4.Name = "Legend1";
-            this.chartBarang.Legends.Add(legend4);
+            chartArea6.Name = "ChartArea1";
+            this.chartBarang.ChartAreas.Add(chartArea6);
+            legend6.Name = "Legend1";
+            this.chartBarang.Legends.Add(legend6);
             this.chartBarang.Location = new System.Drawing.Point(68, 126);
             this.chartBarang.Name = "chartBarang";
-            series4.ChartArea = "ChartArea1";
-            series4.Legend = "Legend1";
-            series4.Name = "Series1";
-            this.chartBarang.Series.Add(series4);
+            series6.ChartArea = "ChartArea1";
+            series6.Legend = "Legend1";
+            series6.Name = "Series1";
+            this.chartBarang.Series.Add(series6);
             this.chartBarang.Size = new System.Drawing.Size(976, 395);
             this.chartBarang.TabIndex = 3;
             this.chartBarang.Text = "Pengeluaran Barang";
@@ -118,6 +126,25 @@
             this.btnDashboard.UseVisualStyleBackColor = true;
             this.btnDashboard.Click += new System.EventHandler(this.btnDashboard_Click);
             // 
+            // satprasDBDataSet
+            // 
+            this.satprasDBDataSet.DataSetName = "satprasDBDataSet";
+            this.satprasDBDataSet.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
+            // 
+            // semesterBindingSource
+            // 
+            this.semesterBindingSource.DataMember = "semester";
+            this.semesterBindingSource.DataSource = this.satprasDBDataSet;
+            // 
+            // semesterTableAdapter
+            // 
+            this.semesterTableAdapter.ClearBeforeFill = true;
+            // 
+            // semesterBindingSource1
+            // 
+            this.semesterBindingSource1.DataMember = "semester";
+            this.semesterBindingSource1.DataSource = this.satprasDBDataSet;
+            // 
             // grafik
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -132,7 +159,11 @@
             this.Controls.Add(this.label1);
             this.Name = "grafik";
             this.Text = "grafik";
+            this.Load += new System.EventHandler(this.grafik_Load);
             ((System.ComponentModel.ISupportInitialize)(this.chartBarang)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.satprasDBDataSet)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.semesterBindingSource)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.semesterBindingSource1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -147,5 +178,9 @@
         private System.Windows.Forms.Button btnLoad;
         private System.Windows.Forms.Button btnReset;
         private System.Windows.Forms.Button btnDashboard;
+        private satprasDBDataSet satprasDBDataSet;
+        private System.Windows.Forms.BindingSource semesterBindingSource;
+        private satprasDBDataSetTableAdapters.semesterTableAdapter semesterTableAdapter;
+        private System.Windows.Forms.BindingSource semesterBindingSource1;
     }
 }
