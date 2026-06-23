@@ -1,20 +1,28 @@
-﻿using SatprasDesktopApp.Config;
+﻿using ExcelDataReader;
+using SatprasDesktopApp.Config;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 namespace ManajemenSarPras
 {
     public partial class kelolaBarang : Form
     {
+        // ==========================================
+        // STATE MANAGEMENT & VARIABLE DEKLARASI
+        // ==========================================
         private bool isEditMode = false;
         private string originalIdBarang = "";
-
-        // Flag pengaman biar form input gak bentrok pas reload data master
         private bool isResetting = false;
         private BindingSource bsBarang = new BindingSource();
+
+        // Variabel Isolasi Engine Excel
+        private DataTable dtPreviewExcel = new DataTable();
+        private bool isPreviewMode = false;
 
         public kelolaBarang()
         {
@@ -30,22 +38,12 @@ namespace ManajemenSarPras
             this.txtReset.Click += new EventHandler(btnBatal_Click);
             this.button3.Click += new EventHandler(button3_Click);
 
-            // Mengikat pergerakan baris remot Navigator / Klik Grid ke isian form
+            // Trigger Excel Import
+            this.btnExcel.Click += new EventHandler(btnExcel_Click);
+            // Tombol Eksekusi DB (Pastikan di form ada tombol bernama btnDB)
+            this.btnDB.Click += new EventHandler(btnDB_Click);
+
             this.bsBarang.PositionChanged += new EventHandler(bsBarang_PositionChanged);
-        }
-
-        private void btnKembali_Click(object sender, EventArgs e)
-        {
-            dashboardPage dashboard = new dashboardPage();
-            dashboard.Show();
-            this.Hide();
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            FormDetailBarang form = new FormDetailBarang();
-            this.Hide();
-            form.Show();
         }
 
         private void kelolaBarang_Load(object sender, EventArgs e)
@@ -66,13 +64,19 @@ namespace ManajemenSarPras
             LoadComboMerk();
             LoadAutoCompleteNamaBarang();
             LoadDataBarang();
+
+            // Matikan tombol eksekusi DB saat pertama kali load
+            btnDB.Enabled = false;
+
             ResetForm();
         }
 
-        // Mengatur form isi otomatis mengikuti remot navigasi
+        // ==========================================
+        // FUNGSI LOAD & BINDING DATA
+        // ==========================================
         private void bsBarang_PositionChanged(object sender, EventArgs e)
         {
-            if (isResetting || bsBarang.Current == null) return;
+            if (isResetting || bsBarang.Current == null || isPreviewMode) return;
 
             DataRowView row = (DataRowView)bsBarang.Current;
 
@@ -166,6 +170,8 @@ namespace ManajemenSarPras
 
         private void LoadDataBarang(string keyword = "")
         {
+            if (isPreviewMode) return;
+
             try
             {
                 using (var conn = DatabaseConfig.GetConnection())
@@ -220,6 +226,23 @@ namespace ManajemenSarPras
             catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
 
+        // ==========================================
+        // FUNGSI NAVIGASI & RESET
+        // ==========================================
+        private void btnKembali_Click(object sender, EventArgs e)
+        {
+            dashboardPage dashboard = new dashboardPage();
+            dashboard.Show();
+            this.Hide();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            FormDetailBarang form = new FormDetailBarang();
+            this.Hide();
+            form.Show();
+        }
+
         private void ResetForm()
         {
             isResetting = true;
@@ -248,9 +271,23 @@ namespace ManajemenSarPras
 
         private void btnBatal_Click(object sender, EventArgs e)
         {
-            ResetForm();
+            if (isPreviewMode)
+            {
+                DialogResult res = MessageBox.Show("Batalkan proses import dan kembalikan Grid ke database aktif?", "Konfirmasi Pembatalan", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (res == DialogResult.Yes)
+                {
+                    SwitchToPreviewMode(false);
+                }
+            }
+            else
+            {
+                ResetForm();
+            }
         }
 
+        // ==========================================
+        // FUNGSI INTERAKSI FORM
+        // ==========================================
         private void cmbTipeBarang_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (cmbTipeBarang.SelectedIndex == -1 || cmbTipeBarang.SelectedValue == null) return;
@@ -263,7 +300,6 @@ namespace ManajemenSarPras
                 txtJumlahBarang.Text = "0";
                 txtJumlahBarang.ReadOnly = true;
                 txtJumlahBarang.BackColor = SystemColors.Control;
-
                 cmbKuantitas.SelectedValue = "Pcs";
                 cmbKuantitas.Enabled = false;
             }
@@ -296,17 +332,18 @@ namespace ManajemenSarPras
 
         private void dgvBarang_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0)
+            if (e.RowIndex >= 0 && !isPreviewMode)
             {
                 bsBarang.Position = e.RowIndex;
             }
         }
 
         // ==========================================
-        // FUNGSI 1: GET ATAU CREATE MERK OTOMATIS (TERSEDIA KEMBALI)
+        // ENGINE RELASIONAL & GENERATOR (ON-THE-FLY)
         // ==========================================
         private int GetOrCreateMerk(string namaMerk, SqlConnection conn, SqlTransaction trans)
         {
+            if (string.IsNullOrWhiteSpace(namaMerk)) return 0;
             namaMerk = namaMerk.Trim();
             string checkQ = "SELECT idMerk FROM master.merk WHERE namaMerk = @nama";
 
@@ -325,9 +362,42 @@ namespace ManajemenSarPras
             }
         }
 
-        // ==========================================
-        // FUNGSI 2: GENERATOR KODE BARANG OTOMATIS (TERSEDIA KEMBALI)
-        // ==========================================
+        private int GetOrCreateGedung(string namaGedung, SqlConnection conn, SqlTransaction trans)
+        {
+            if (string.IsNullOrWhiteSpace(namaGedung)) return 0;
+            string query = "SELECT idGedung FROM master.gedung WHERE namaGedung = @nama";
+            using (var cmd = new SqlCommand(query, conn, trans))
+            {
+                cmd.Parameters.AddWithValue("@nama", namaGedung.Trim());
+                object result = cmd.ExecuteScalar();
+                if (result != null) return Convert.ToInt32(result);
+            }
+            using (var cmd = new SqlCommand("INSERT INTO master.gedung (namaGedung) OUTPUT INSERTED.idGedung VALUES (@nama)", conn, trans))
+            {
+                cmd.Parameters.AddWithValue("@nama", namaGedung.Trim());
+                return (int)cmd.ExecuteScalar();
+            }
+        }
+
+        private int GetOrCreateRuangan(string namaRuangan, int idGedung, SqlConnection conn, SqlTransaction trans)
+        {
+            if (string.IsNullOrWhiteSpace(namaRuangan)) return 0;
+            string query = "SELECT idRuangan FROM master.ruangan WHERE namaRuangan = @nama AND idGedung = @idGedung";
+            using (var cmd = new SqlCommand(query, conn, trans))
+            {
+                cmd.Parameters.AddWithValue("@nama", namaRuangan.Trim());
+                cmd.Parameters.AddWithValue("@idGedung", idGedung);
+                object result = cmd.ExecuteScalar();
+                if (result != null) return Convert.ToInt32(result);
+            }
+            using (var cmd = new SqlCommand("INSERT INTO master.ruangan (idGedung, namaRuangan) OUTPUT INSERTED.idRuangan VALUES (@idGedung, @nama)", conn, trans))
+            {
+                cmd.Parameters.AddWithValue("@idGedung", idGedung);
+                cmd.Parameters.AddWithValue("@nama", namaRuangan.Trim());
+                return (int)cmd.ExecuteScalar();
+            }
+        }
+
         private string GenerateIdBarangOtomatis(string namaMerk, int tipeBarang, SqlConnection conn, SqlTransaction trans)
         {
             string cleanMerk = namaMerk.Trim().Replace(" ", "").ToUpper();
@@ -346,6 +416,9 @@ namespace ManajemenSarPras
             return $"{codePrefix}{runningNumber.ToString("D3")}";
         }
 
+        // ==========================================
+        // ENGINE CRUD: SIMPAN MANUAL
+        // ==========================================
         private void btnSimpan_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtNamaBarang.Text) ||
@@ -403,7 +476,7 @@ namespace ManajemenSarPras
                         else
                         {
                             finalIdBarang = GenerateIdBarangOtomatis(cmbMerk.Text, tipeInput, conn, transaction);
-                            query = "INSERT INTO master.barang (idBarang, namaBarang, idMerk, stok, tipeBarang, satuan) VALUES (@id, @nama, @idMerk, @stok, @tipe, @satuan)";
+                            query = "INSERT INTO master.barang (idBarang, namaBarang, idMerk, stok, tipeBarang, satuan, isiKonversi) VALUES (@id, @nama, @idMerk, @stok, @tipe, @satuan, 1)";
                         }
 
                         using (var cmd = new SqlCommand(query, conn, transaction))
@@ -438,6 +511,205 @@ namespace ManajemenSarPras
             catch (Exception ex)
             {
                 MessageBox.Show("Kesalahan Database: " + ex.Message, "System Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ==========================================
+        // ENGINE EXCEL & TRANSAKSI MASSAL MUTLAK
+        // ==========================================
+        private void SwitchToPreviewMode(bool previewOn)
+        {
+            isPreviewMode = previewOn;
+
+            if (previewOn)
+            {
+                bsBarang.DataSource = null;
+                dataGridView1.DataSource = dtPreviewExcel;
+
+                btnTambahBarang.Enabled = false;
+                txtCari.Enabled = false;
+                cmbMerk.Enabled = false;
+                cmbTipeBarang.Enabled = false;
+                cmbKuantitas.Enabled = false;
+                txtNamaBarang.Enabled = false;
+                txtJumlahBarang.Enabled = false;
+
+                btnDB.Enabled = true;
+                btnDB.Text = "Eksekusi DB";
+                btnDB.BackColor = Color.OrangeRed;
+                btnDB.ForeColor = Color.White;
+
+                txtReset.Text = "Batal Import";
+            }
+            else
+            {
+                dtPreviewExcel.Clear();
+                btnTambahBarang.Enabled = true;
+                txtCari.Enabled = true;
+                cmbMerk.Enabled = true;
+                cmbTipeBarang.Enabled = true;
+                cmbKuantitas.Enabled = true;
+                txtNamaBarang.Enabled = true;
+                txtJumlahBarang.Enabled = true;
+
+                btnDB.Enabled = false;
+                btnDB.Text = "Import Excel";
+                btnDB.BackColor = SystemColors.Control;
+                btnDB.ForeColor = Color.Black;
+
+                txtReset.Text = "Reset Form";
+
+                LoadDataBarang();
+                ResetForm();
+            }
+        }
+
+        private void btnExcel_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog() { Filter = "Excel Files|*.xls;*.xlsx" })
+            {
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        using (var stream = File.Open(ofd.FileName, FileMode.Open, FileAccess.Read))
+                        {
+                            using (var reader = ExcelReaderFactory.CreateReader(stream))
+                            {
+                                var result = reader.AsDataSet(new ExcelDataSetConfiguration()
+                                {
+                                    ConfigureDataTable = (_) => new ExcelDataTableConfiguration() { UseHeaderRow = true }
+                                });
+
+                                dtPreviewExcel = result.Tables[0];
+
+                                if (!dtPreviewExcel.Columns.Contains("NamaBarang") || !dtPreviewExcel.Columns.Contains("IDDetailBarang"))
+                                {
+                                    MessageBox.Show("Format Excel salah. Pastikan Header Excel Anda sesuai dengan standar sistem:\n[NamaBarang, Merk, TipeBarang, Satuan, IsiKonversi, StokHabisPakai, IDDetailBarang, Spesifikasi, NamaGedung, NamaRuangan]", "Penolakan Sistem", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                    return;
+                                }
+
+                                SwitchToPreviewMode(true);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"File terkunci atau rusak. Tutup Excel jika sedang dibuka. Detail: {ex.Message}", "I/O Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void btnDB_Click(object sender, EventArgs e)
+        {
+            if (!isPreviewMode || dtPreviewExcel == null || dtPreviewExcel.Rows.Count == 0) return;
+
+            DialogResult dialog = MessageBox.Show($"Sistem akan mengeksekusi {dtPreviewExcel.Rows.Count} baris instruksi ke Database. Tindakan ini bersifat mutlak dan tidak bisa dibatalkan. Eksekusi?", "Konfirmasi Otorisasi", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (dialog != DialogResult.Yes) return;
+
+            using (var conn = DatabaseConfig.GetConnection())
+            {
+                if (conn == null) return;
+                SqlTransaction transaction = conn.BeginTransaction();
+
+                try
+                {
+                    var cacheMasterBarang = new Dictionary<string, string>();
+
+                    foreach (DataRow row in dtPreviewExcel.Rows)
+                    {
+                        string namaBarang = row["NamaBarang"].ToString().Trim();
+                        if (string.IsNullOrWhiteSpace(namaBarang)) continue;
+
+                        string merk = row["Merk"].ToString().Trim();
+                        int tipeBarang = Convert.ToInt32(row["TipeBarang"]);
+                        string satuan = row["Satuan"].ToString().Trim();
+                        int isiKonversi = string.IsNullOrWhiteSpace(row["IsiKonversi"].ToString()) ? 1 : Convert.ToInt32(row["IsiKonversi"]);
+
+                        int idMerk = GetOrCreateMerk(merk, conn, transaction);
+                        string masterKey = $"{namaBarang}_{idMerk}_{tipeBarang}";
+                        string idBarang = "";
+
+                        if (!cacheMasterBarang.ContainsKey(masterKey))
+                        {
+                            idBarang = GenerateIdBarangOtomatis(merk, tipeBarang, conn, transaction);
+
+                            int stokAwal = 0;
+                            if (tipeBarang == 0)
+                            {
+                                stokAwal = string.IsNullOrWhiteSpace(row["StokHabisPakai"].ToString()) ? 0 : Convert.ToInt32(row["StokHabisPakai"]);
+                            }
+                            else
+                            {
+                                stokAwal = dtPreviewExcel.Select($"NamaBarang = '{namaBarang}' AND Merk = '{merk}'").Length;
+                            }
+
+                            string insertMasterQ = "INSERT INTO master.barang (idBarang, namaBarang, stok, tipeBarang, idMerk, satuan, isiKonversi) VALUES (@id, @nama, @stok, @tipe, @idMerk, @satuan, @konversi)";
+                            using (var cmdM = new SqlCommand(insertMasterQ, conn, transaction))
+                            {
+                                cmdM.Parameters.AddWithValue("@id", idBarang);
+                                cmdM.Parameters.AddWithValue("@nama", namaBarang);
+                                cmdM.Parameters.AddWithValue("@stok", stokAwal);
+                                cmdM.Parameters.AddWithValue("@tipe", tipeBarang);
+                                cmdM.Parameters.AddWithValue("@idMerk", idMerk);
+                                cmdM.Parameters.AddWithValue("@satuan", satuan);
+                                cmdM.Parameters.AddWithValue("@konversi", isiKonversi);
+                                cmdM.ExecuteNonQuery();
+                            }
+                            cacheMasterBarang.Add(masterKey, idBarang);
+                        }
+                        else
+                        {
+                            idBarang = cacheMasterBarang[masterKey];
+                        }
+
+                        if (tipeBarang == 1)
+                        {
+                            string idDetail = row["IDDetailBarang"].ToString().Trim();
+                            string gedung = row["NamaGedung"].ToString().Trim();
+                            string ruangan = row["NamaRuangan"].ToString().Trim();
+                            string spesifikasi = row["Spesifikasi"].ToString().Trim();
+
+                            if (string.IsNullOrWhiteSpace(idDetail) || string.IsNullOrWhiteSpace(ruangan))
+                            {
+                                throw new Exception($"Aset '{namaBarang}' tidak memiliki ID Detail atau Nama Ruangan.");
+                            }
+
+                            int idGedung = GetOrCreateGedung(gedung, conn, transaction);
+                            int idRuangan = GetOrCreateRuangan(ruangan, idGedung, conn, transaction);
+
+                            string insertDetailQ = "INSERT INTO [transaction].[detailBarang] (idDetailBarang, idBarang, idRuangan, spesifikasi, satuan) VALUES (@idDetail, @idBarang, @idRuangan, @spek, @satuan)";
+                            using (var cmdD = new SqlCommand(insertDetailQ, conn, transaction))
+                            {
+                                cmdD.Parameters.AddWithValue("@idDetail", idDetail);
+                                cmdD.Parameters.AddWithValue("@idBarang", idBarang);
+                                cmdD.Parameters.AddWithValue("@idRuangan", idRuangan);
+                                cmdD.Parameters.AddWithValue("@spek", spesifikasi);
+                                cmdD.Parameters.AddWithValue("@satuan", satuan);
+                                cmdD.ExecuteNonQuery();
+                            }
+                        }
+                    }
+
+                    transaction.Commit();
+                    MessageBox.Show("Integritas data berhasil disuntikkan ke Database tanpa celah.", "Eksekusi Sempurna", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    SwitchToPreviewMode(false);
+                }
+                catch (SqlException sqlEx)
+                {
+                    transaction.Rollback();
+                    if (sqlEx.Number == 2627)
+                        MessageBox.Show("Ditemukan ID Detail Barang ganda (Primary Key Collision) pada file Excel. Transaksi ditarik mundur mutlak.", "Fatal Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    else
+                        MessageBox.Show($"Kesalahan Arsitektur SQL: {sqlEx.Message}", "Rollback", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    MessageBox.Show($"Cacat Logika: {ex.Message}\nSeluruh instruksi telah di-Rollback.", "Rollback", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
     }

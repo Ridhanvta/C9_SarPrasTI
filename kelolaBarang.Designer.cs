@@ -71,7 +71,7 @@
             // 
             this.btnKembali.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnKembali.Location = new System.Drawing.Point(14, 24);
-            this.btnKembali.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnKembali.Margin = new System.Windows.Forms.Padding(2);
             this.btnKembali.Name = "btnKembali";
             this.btnKembali.Size = new System.Drawing.Size(71, 20);
             this.btnKembali.TabIndex = 0;
@@ -85,7 +85,7 @@
             this.dataGridView1.AllowUserToDeleteRows = false;
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(279, 99);
-            this.dataGridView1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.dataGridView1.Margin = new System.Windows.Forms.Padding(2);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.ReadOnly = true;
             this.dataGridView1.RowHeadersWidth = 62;
@@ -132,7 +132,7 @@
             // txtNamaBarang
             // 
             this.txtNamaBarang.Location = new System.Drawing.Point(123, 119);
-            this.txtNamaBarang.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.txtNamaBarang.Margin = new System.Windows.Forms.Padding(2);
             this.txtNamaBarang.Name = "txtNamaBarang";
             this.txtNamaBarang.Size = new System.Drawing.Size(145, 20);
             this.txtNamaBarang.TabIndex = 6;
@@ -143,7 +143,7 @@
             this.btnTambahBarang.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnTambahBarang.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.btnTambahBarang.Location = new System.Drawing.Point(20, 307);
-            this.btnTambahBarang.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnTambahBarang.Margin = new System.Windows.Forms.Padding(2);
             this.btnTambahBarang.Name = "btnTambahBarang";
             this.btnTambahBarang.Size = new System.Drawing.Size(130, 22);
             this.btnTambahBarang.TabIndex = 9;
@@ -155,7 +155,7 @@
             // 
             this.button3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button3.Location = new System.Drawing.Point(20, 333);
-            this.button3.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.button3.Margin = new System.Windows.Forms.Padding(2);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(250, 22);
             this.button3.TabIndex = 12;
@@ -179,7 +179,7 @@
             "Perlu Pengecekkan Rutin",
             "Tidak Perlu Pengecekkan Rutin"});
             this.cmbTipeBarang.Location = new System.Drawing.Point(123, 188);
-            this.cmbTipeBarang.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cmbTipeBarang.Margin = new System.Windows.Forms.Padding(2);
             this.cmbTipeBarang.Name = "cmbTipeBarang";
             this.cmbTipeBarang.Size = new System.Drawing.Size(145, 21);
             this.cmbTipeBarang.TabIndex = 14;
@@ -197,7 +197,7 @@
             // txtJumlahBarang
             // 
             this.txtJumlahBarang.Location = new System.Drawing.Point(126, 274);
-            this.txtJumlahBarang.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.txtJumlahBarang.Margin = new System.Windows.Forms.Padding(2);
             this.txtJumlahBarang.Name = "txtJumlahBarang";
             this.txtJumlahBarang.Size = new System.Drawing.Size(145, 20);
             this.txtJumlahBarang.TabIndex = 16;
@@ -215,7 +215,7 @@
             // txtCari
             // 
             this.txtCari.Location = new System.Drawing.Point(362, 65);
-            this.txtCari.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.txtCari.Margin = new System.Windows.Forms.Padding(2);
             this.txtCari.Name = "txtCari";
             this.txtCari.Size = new System.Drawing.Size(258, 20);
             this.txtCari.TabIndex = 19;
@@ -226,7 +226,7 @@
             this.txtReset.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtReset.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.txtReset.Location = new System.Drawing.Point(154, 307);
-            this.txtReset.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.txtReset.Margin = new System.Windows.Forms.Padding(2);
             this.txtReset.Name = "txtReset";
             this.txtReset.Size = new System.Drawing.Size(116, 22);
             this.txtReset.TabIndex = 20;
@@ -247,7 +247,7 @@
             // 
             this.cmbMerk.FormattingEnabled = true;
             this.cmbMerk.Location = new System.Drawing.Point(123, 148);
-            this.cmbMerk.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cmbMerk.Margin = new System.Windows.Forms.Padding(2);
             this.cmbMerk.Name = "cmbMerk";
             this.cmbMerk.Size = new System.Drawing.Size(145, 21);
             this.cmbMerk.TabIndex = 22;
@@ -259,7 +259,7 @@
             "Perlu Pengecekkan Rutin",
             "Tidak Perlu Pengecekkan Rutin"});
             this.cmbKuantitas.Location = new System.Drawing.Point(123, 232);
-            this.cmbKuantitas.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cmbKuantitas.Margin = new System.Windows.Forms.Padding(2);
             this.cmbKuantitas.Name = "cmbKuantitas";
             this.cmbKuantitas.Size = new System.Drawing.Size(145, 21);
             this.cmbKuantitas.TabIndex = 24;
@@ -379,6 +379,7 @@
             this.btnExcel.TabIndex = 26;
             this.btnExcel.Text = "Import Excel Untuk Data Barang";
             this.btnExcel.UseVisualStyleBackColor = true;
+            this.btnExcel.Click += new System.EventHandler(this.btnExcel_Click);
             // 
             // btnDB
             // 
@@ -418,7 +419,7 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.btnKembali);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "kelolaBarang";
             this.Text = "kelolaBarang";
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
