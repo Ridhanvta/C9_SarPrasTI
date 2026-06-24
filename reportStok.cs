@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -146,69 +146,16 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
+                // Ambil idSemester dari combobox jika ada filter yang dipilih
+                int? idSemesterFilter = null;
+                if (cmbTahunAjaran.SelectedValue != null && cmbTahunAjaran.SelectedIndex != -1)
                 {
-                    if (conn == null) return;
-
-                    // 1. Siapkan adonan query yang sama persis kayak di layar DGV
-                    string query = @"
-                        SELECT DISTINCT 
-                            b.namaBarang AS [Nama Barang],
-                            b.stok AS [Jumlah Saat Ini],
-                            CASE 
-                                WHEN b.tipeBarang = 0 THEN 'Barang Habis Pakai'
-                                WHEN b.tipeBarang = 1 THEN 'Aset Tetap'
-                                ELSE 'Tidak Diketahui'
-                            END AS [Jenis Barang],
-                            b.satuan AS [Satuan]
-                        FROM [master].[barang] b
-                        LEFT JOIN [master].[merk] m ON b.idMerk = m.idMerk ";
-
-                    // Cek apakah user lagi nge-filter pakai combobox
-                    bool isFiltered = (cmbTahunAjaran.SelectedValue != null && cmbTahunAjaran.SelectedIndex != -1);
-
-                    if (isFiltered)
-                    {
-                        query += @"
-                        INNER JOIN [transaction].[permintaanBarang] p ON b.idBarang = p.idBarang
-                        WHERE p.idSemester = @idSemester";
-                    }
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        // Masukin id semester kalau lagi difilter
-                        if (isFiltered)
-                        {
-                            cmd.Parameters.AddWithValue("@idSemester", Convert.ToInt32(cmbTahunAjaran.SelectedValue));
-                        }
-
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            DataTable dtCetak = new DataTable();
-                            da.Fill(dtCetak);
-
-                            // Validasi kalau datanya kosong, nggak usah diprint
-                            if (dtCetak.Rows.Count == 0)
-                            {
-                                MessageBox.Show("Nggak ada data yang bisa dicetak bro!", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                return;
-                            }
-
-                            
-                            // Ganti 'ReportStokBarang' dengan nama file .rpt lo
-                            rptStok rptDoc = new rptStok(); 
-                            rptDoc.SetDataSource(dtCetak);
-
-                            // Ganti 'FormPrintViewer' dengan nama Form yang ada CrystalReportViewer-nya
-                            //cetakDataStok frmViewer = new cetakDataStok();
-                            //frmViewer.crystalReportViewer1.ReportSource = rptDoc;
-                            //frmViewer.ShowDialog();
-                            
-
-                            MessageBox.Show("Sistem udah siap nyetak! Tinggal uncomment kode Crystal Report-nya.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
-                    }
+                    idSemesterFilter = Convert.ToInt32(cmbTahunAjaran.SelectedValue);
                 }
+
+                // Panggil form cetakDataStok yang sudah punya logika report Object Collection
+                cetakDataStok frmViewer = new cetakDataStok(idSemesterFilter);
+                frmViewer.ShowDialog();
             }
             catch (Exception ex)
             {
