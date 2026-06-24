@@ -63,7 +63,10 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.bindingNavigator1)).BeginInit();
             this.bindingNavigator1.SuspendLayout();
-            this.SuspendLayout();
+            
+            this.btnExcel = new System.Windows.Forms.Button();
+            this.btnDB = new System.Windows.Forms.Button();
+this.SuspendLayout();
             // 
             // btnKembali
             // 
@@ -358,7 +361,32 @@
             this.bindingNavigatorSeparator2.Name = "bindingNavigatorSeparator";
             this.bindingNavigatorSeparator2.Size = new System.Drawing.Size(6, 27);
             // 
-            // kelolaBarang
+            
+            // 
+            // btnExcel
+            // 
+            this.btnExcel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnExcel.Location = new System.Drawing.Point(21, 385);
+            this.btnExcel.Margin = new System.Windows.Forms.Padding(2);
+            this.btnExcel.Name = "btnExcel";
+            this.btnExcel.Size = new System.Drawing.Size(597, 22);
+            this.btnExcel.TabIndex = 26;
+            this.btnExcel.Text = "Import Excel Untuk Data Barang";
+            this.btnExcel.UseVisualStyleBackColor = true;
+            this.btnExcel.Click += new System.EventHandler(this.btnExcel_Click);
+            // 
+            // btnDB
+            // 
+            this.btnDB.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnDB.Location = new System.Drawing.Point(20, 415);
+            this.btnDB.Margin = new System.Windows.Forms.Padding(2);
+            this.btnDB.Name = "btnDB";
+            this.btnDB.Size = new System.Drawing.Size(597, 22);
+            this.btnDB.TabIndex = 27;
+            this.btnDB.Text = "Import Data Barang Ke Database";
+            this.btnDB.UseVisualStyleBackColor = true;
+            this.btnDB.Click += new System.EventHandler(this.btnDB_Click);
+// kelolaBarang
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -383,6 +411,9 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.btnKembali);
+            this.Controls.Add(this.btnExcel);
+            this.Controls.Add(this.btnDB);
+
             this.Name = "kelolaBarang";
             this.Text = "kelolaBarang";
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
@@ -426,5 +457,8 @@
         private System.Windows.Forms.ToolStripButton bindingNavigatorMoveNextItem;
         private System.Windows.Forms.ToolStripButton bindingNavigatorMoveLastItem;
         private System.Windows.Forms.ToolStripSeparator bindingNavigatorSeparator2;
-    }
+    
+        private System.Windows.Forms.Button btnExcel;
+        private System.Windows.Forms.Button btnDB;
+}
 }
