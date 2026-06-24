@@ -1,7 +1,6 @@
-﻿using SatprasDesktopApp.Config;
+using SatprasDesktopApp.Config;
 using System;
-using System.Data;
-using System.Data.SqlClient;
+
 using System.Windows.Forms;
 
 namespace ManajemenSarPras
@@ -26,33 +25,17 @@ namespace ManajemenSarPras
 
             try
             {
-                using (var connection = DatabaseConfig.GetConnection())
+                bool isValid = DAL.AuthenticateUser(emailUser, passwordUser);
+
+                if (isValid)
                 {
-                    if (connection.State != ConnectionState.Open)
-                    {
-                        connection.Open();
-                    }
-
-                    string query = "SELECT COUNT(1) FROM [master].users WHERE email = @Email AND password = @Password";
-
-                    using (SqlCommand command = new SqlCommand(query, connection))
-                    {
-                        command.Parameters.AddWithValue("@Email", emailUser);
-                        command.Parameters.AddWithValue("@Password", passwordUser);
-
-                        int userCount = Convert.ToInt32(command.ExecuteScalar());
-
-                        if (userCount > 0)
-                        {
-                            dashboardPage home = new dashboardPage();
-                            home.Show();
-                            this.Hide();
-                        }
-                        else
-                        {
-                            MessageBox.Show("Kredensial tidak valid. Email atau Password salah.", "Akses Ditolak", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                    }
+                    dashboardPage home = new dashboardPage();
+                    home.Show();
+                    this.Hide();
+                }
+                else
+                {
+                    MessageBox.Show("Kredensial tidak valid. Email atau Password salah.", "Akses Ditolak", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (Exception ex)
