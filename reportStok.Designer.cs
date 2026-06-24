@@ -98,6 +98,7 @@
             this.btnCetak.TabIndex = 5;
             this.btnCetak.Text = "Cetak";
             this.btnCetak.UseVisualStyleBackColor = true;
+            this.btnCetak.Click += new System.EventHandler(this.btnCetak_Click);
             // 
             // btnKembali
             // 

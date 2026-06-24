@@ -15,7 +15,6 @@ namespace ManajemenSarPras
 {
     public partial class grafik : Form
     {
-        // KONEKSI MANUAL KITA HAPUS, KITA PAKAI DatabaseConfig.GetConnection() BAWAAN LO
 
         public grafik()
         {
