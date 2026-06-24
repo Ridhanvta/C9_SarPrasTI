@@ -1,10 +1,9 @@
-﻿using ClosedXML.Excel;
+using ClosedXML.Excel;
 using SatprasDesktopApp.Config;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -82,29 +81,18 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
+                DataTable dt = DAL.GetSemesterReportData();
 
-                    string query = "SELECT idSemester, tahunAjaran FROM master.semester";
-                    using (var cmd = new SqlCommand(query, conn))
-                    using (var da = new SqlDataAdapter(cmd))
-                    {
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
+                // MANUVER ARSITEK: Menyisipkan baris default ke urutan paling atas (Index 0)
+                DataRow dr = dt.NewRow();
+                dr["idSemester"] = 0; // ID 0 tidak akan pernah ada di database sungguhan
+                dr["tahunAjaran"] = "-- Pilih Semester --";
+                dt.Rows.InsertAt(dr, 0);
 
-                        // MANUVER ARSITEK: Menyisipkan baris default ke urutan paling atas (Index 0)
-                        DataRow dr = dt.NewRow();
-                        dr["idSemester"] = 0; // ID 0 tidak akan pernah ada di database sungguhan
-                        dr["tahunAjaran"] = "-- Pilih Semester --";
-                        dt.Rows.InsertAt(dr, 0);
-
-                        cmbSemester.DataSource = dt;
-                        cmbSemester.DisplayMember = "tahunAjaran";
-                        cmbSemester.ValueMember = "idSemester";
-                        cmbSemester.SelectedIndex = 0; // Kunci di nilai default
-                    }
-                }
+                cmbSemester.DataSource = dt;
+                cmbSemester.DisplayMember = "tahunAjaran";
+                cmbSemester.ValueMember = "idSemester";
+                cmbSemester.SelectedIndex = 0; // Kunci di nilai default
             }
             catch (Exception ex)
             {
@@ -113,42 +101,14 @@ namespace ManajemenSarPras
         }
 
 
-        // FUNGSI 1: Ambil barang Non-Rutin yang stoknya kritis (< 20)
         private DataTable GetProcurementAlertData()
         {
-            DataTable dt = new DataTable();
-            using (var conn = DatabaseConfig.GetConnection())
-            {
-                string query = @"
-            SELECT namaBarang AS [Nama Barang], stok AS [Sisa Stok], 'SEGERA BELI' AS [Rekomendasi]
-            FROM [master].barang 
-            WHERE tipeBarang = 0 AND stok < 20";
-                using (var da = new SqlDataAdapter(query, conn)) da.Fill(dt);
-            }
-            return dt;
+            return DAL.GetProcurementAlertData();
         }
 
-        // FUNGSI 2: Ambil barang Rutin yang sering rusak (Threshold: > 2x Rusak dalam history)
         private DataTable GetReplacementAlertData()
         {
-            DataTable dt = new DataTable();
-            using (var conn = DatabaseConfig.GetConnection())
-            {
-                string query = @"
-            SELECT 
-                b.namaBarang AS [Nama Asset], 
-                r.namaRuangan AS [Lokasi],
-                COUNT(m.idMaintenance) AS [Total Frekuensi Rusak]
-            FROM [transaction].maintenance m
-            JOIN [transaction].detailBarang db ON m.idDetailBarang = db.idDetailBarang
-            JOIN [master].barang b ON db.idBarang = b.idBarang
-            JOIN [master].ruangan r ON db.idRuangan = r.idRuangan
-            WHERE m.kondisi = 0 -- 0 artinya Rusak
-            GROUP BY b.namaBarang, r.namaRuangan
-            HAVING COUNT(m.idMaintenance) >= 2"; // Jika sudah 2x rusak atau lebih, layak ganti
-                using (var da = new SqlDataAdapter(query, conn)) da.Fill(dt);
-            }
-            return dt;
+            return DAL.GetReplacementAlertData();
         }
 
         // =========================================================
@@ -156,100 +116,28 @@ namespace ManajemenSarPras
         // =========================================================
         private DataTable GetLaporanData(string tipe, int idSemester, int angkaBulan)
         {
-            DataTable dt = new DataTable();
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return dt;
-
-                    // Query Dasar dengan JOIN untuk mendapatkan nama asli
-                    string query = @"
-                        SELECT 
-                            pb.tglPermintaan AS [Tanggal Transaksi],
-                            b.namaBarang AS [Nama Barang],
-                            r.namaRuangan AS [Lokasi Ruangan],
-                            pb.namaPeminta AS [Nama Peminta],
-                            pb.jumlah AS [Jumlah Diberikan]
-                        FROM [transaction].permintaanBarang pb
-                        JOIN [master].barang b ON pb.idBarang = b.idBarang
-                        JOIN [master].ruangan r ON pb.idRuangan = r.idRuangan
-                        WHERE pb.idSemester = @idSemester";
-
-                    // Modifikasi query secara dinamis jika user meminta laporan Bulanan
-                    if (tipe.ToLower() == "bulanan" && angkaBulan > 0)
-                    {
-                        query += " AND MONTH(pb.tglPermintaan) = @bulan";
-                    }
-
-                    using (var cmd = new SqlCommand(query, conn))
-                    {
-                        // Proteksi Mutlak SQL Injection
-                        cmd.Parameters.AddWithValue("@idSemester", idSemester);
-
-                        if (tipe.ToLower() == "bulanan" && angkaBulan > 0)
-                        {
-                            cmd.Parameters.AddWithValue("@bulan", angkaBulan);
-                        }
-
-                        using (var da = new SqlDataAdapter(cmd))
-                        {
-                            da.Fill(dt);
-                        }
-                    }
-                }
+                return DAL.GetLaporanData(tipe, idSemester, angkaBulan);
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Gagal mengeksekusi query Laporan Utama: " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return new DataTable();
             }
-            return dt;
         }
 
         private DataTable GetMaintenanceData(string tipe, int idSemester, int angkaBulan)
         {
-            DataTable dt = new DataTable();
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return dt;
-
-                    string query = @"
-                SELECT 
-                    m.tglCek AS [Tanggal Pengecekan],
-                    b.namaBarang AS [Nama Aset],
-                    r.namaRuangan AS [Lokasi],
-                    k.namaKaryawan AS [Petugas],
-                    CASE WHEN m.kondisi = 1 THEN 'BAIK' ELSE 'RUSAK' END AS [Kondisi Akhir],
-                    ISNULL(m.kerusakan, '-') AS [Detail Kerusakan],
-                    ISNULL(m.tindakLanjut, '-') AS [Tindak Lanjut]
-                FROM [transaction].maintenance m
-                JOIN [transaction].detailBarang db ON m.idDetailBarang = db.idDetailBarang
-                JOIN [master].barang b ON db.idBarang = b.idBarang
-                JOIN [master].ruangan r ON db.idRuangan = r.idRuangan
-                JOIN [master].karyawan k ON m.idKaryawan = k.idKaryawan
-                WHERE m.idSemester = @idSemester";
-
-                    if (tipe.ToLower() == "bulanan" && angkaBulan > 0)
-                    {
-                        query += " AND MONTH(m.tglCek) = @bulan";
-                    }
-
-                    using (var cmd = new SqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@idSemester", idSemester);
-                        if (tipe.ToLower() == "bulanan") cmd.Parameters.AddWithValue("@bulan", angkaBulan);
-
-                        using (var da = new SqlDataAdapter(cmd)) da.Fill(dt);
-                    }
-                }
+                return DAL.GetMaintenanceData(tipe, idSemester, angkaBulan);
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Gagal menarik data Maintenance: " + ex.Message, "DB Error");
+                return new DataTable();
             }
-            return dt;
         }
 
         private void button1_Click(object sender, EventArgs e)

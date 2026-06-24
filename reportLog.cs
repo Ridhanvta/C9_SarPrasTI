@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Windows.Forms;
 using SatprasDesktopApp.Config; // Pastikan namespace ini sesuai dengan project lo
 
@@ -24,27 +23,12 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-
-                    string query = "SELECT idSemester, tahunAjaran FROM [master].[semester]";
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            DataTable dt = new DataTable();
-                            da.Fill(dt);
-
-                            cmbTahunAjaran.DataSource = dt;
-                            cmbTahunAjaran.DisplayMember = "tahunAjaran";
-                            cmbTahunAjaran.ValueMember = "idSemester";
-                            cmbTahunAjaran.DropDownStyle = ComboBoxStyle.DropDownList;
-                            cmbTahunAjaran.SelectedIndex = -1;
-                        }
-                    }
-                }
+                DataTable dt = DAL.GetAllSemesters();
+                cmbTahunAjaran.DataSource = dt;
+                cmbTahunAjaran.DisplayMember = "tahunAjaran";
+                cmbTahunAjaran.ValueMember = "idSemester";
+                cmbTahunAjaran.DropDownStyle = ComboBoxStyle.DropDownList;
+                cmbTahunAjaran.SelectedIndex = -1;
             }
             catch (Exception ex)
             {
@@ -73,56 +57,24 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
+                bool isFiltered = (cmbTahunAjaran.SelectedValue != null && cmbTahunAjaran.SelectedIndex != -1);
+                int? idSemester = isFiltered ? (int?)Convert.ToInt32(cmbTahunAjaran.SelectedValue) : null;
+                
+                DataTable dt = DAL.GetReportEvaluasiData(idSemester);
+                List<ReportEvaluasiHabisPakai> listEvaluasi = new List<ReportEvaluasiHabisPakai>();
+
+                foreach (DataRow row in dt.Rows)
                 {
-                    if (conn == null) return;
-
-                    // Query tarik data dari VIEW evaluasi yang sudah kita buat
-                    string query = @"
-                        SELECT DISTINCT 
-                            v.NamaBarang, 
-                            v.TotalKeluar, 
-                            v.FrekuensiDiminta AS [jumlah diminta], 
-                            v.FrekuensiRestock AS [jumlah restock], 
-                            v.RataRataJmlRestock, 
-                            v.StatusEvaluasi AS [analisa]
-                        FROM [dbo].[vwEvaluasiHabisPakai] v
-                        INNER JOIN [master].[barang] b ON v.NamaBarang = b.namaBarang ";
-
-                    bool isFiltered = (cmbTahunAjaran.SelectedValue != null && cmbTahunAjaran.SelectedIndex != -1);
-
-                    if (isFiltered)
+                    listEvaluasi.Add(new ReportEvaluasiHabisPakai
                     {
-                        query += @"
-                        INNER JOIN [transaction].[permintaanBarang] p ON b.idBarang = p.idBarang
-                        WHERE p.idSemester = @idSemester";
-                    }
-
-                    List<ReportEvaluasiHabisPakai> listEvaluasi = new List<ReportEvaluasiHabisPakai>();
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        if (isFiltered)
-                        {
-                            cmd.Parameters.AddWithValue("@idSemester", Convert.ToInt32(cmbTahunAjaran.SelectedValue));
-                        }
-
-                        using (SqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                listEvaluasi.Add(new ReportEvaluasiHabisPakai
-                                {
-                                    NamaBarang = reader["NamaBarang"].ToString(),
-                                    TotalKeluar = Convert.ToInt32(reader["TotalKeluar"]),
-                                    FrekuensiDiminta = Convert.ToInt32(reader["jumlah diminta"]),
-                                    FrekuensiRestock = Convert.ToInt32(reader["jumlah restock"]),
-                                    RataRataJmlRestock = Convert.ToInt32(reader["RataRataJmlRestock"]),
-                                    StatusEvaluasi = reader["analisa"].ToString()
-                                });
-                            }
-                        }
-                    }
+                        NamaBarang = row["NamaBarang"].ToString(),
+                        TotalKeluar = Convert.ToInt32(row["TotalKeluar"]),
+                        FrekuensiDiminta = Convert.ToInt32(row["jumlah diminta"]),
+                        FrekuensiRestock = Convert.ToInt32(row["jumlah restock"]),
+                        RataRataJmlRestock = Convert.ToInt32(row["RataRataJmlRestock"]),
+                        StatusEvaluasi = row["analisa"].ToString()
+                    });
+                }
 
                     if (listEvaluasi.Count == 0)
                     {
@@ -170,7 +122,6 @@ namespace ManajemenSarPras
                         frmViewer.crvLog.Refresh();
                         frmViewer.ShowDialog();
                     }
-                }
             }
             catch (Exception ex)
             {

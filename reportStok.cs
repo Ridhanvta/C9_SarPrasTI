@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Data.SqlClient;
 using SatprasDesktopApp.Config;
 
 // Pastikan lo udah nambahin library Crystal Reports di project lo
@@ -46,27 +45,12 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-
-                    string query = "SELECT idSemester, tahunAjaran FROM [master].[semester]";
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            DataTable dt = new DataTable();
-                            da.Fill(dt);
-
-                            cmbTahunAjaran.DataSource = dt;
-                            cmbTahunAjaran.DisplayMember = "tahunAjaran";
-                            cmbTahunAjaran.ValueMember = "idSemester";
-                            cmbTahunAjaran.DropDownStyle = ComboBoxStyle.DropDownList;
-                            cmbTahunAjaran.SelectedIndex = -1;
-                        }
-                    }
-                }
+                DataTable dt = DAL.GetAllSemesters();
+                cmbTahunAjaran.DataSource = dt;
+                cmbTahunAjaran.DisplayMember = "tahunAjaran";
+                cmbTahunAjaran.ValueMember = "idSemester";
+                cmbTahunAjaran.DropDownStyle = ComboBoxStyle.DropDownList;
+                cmbTahunAjaran.SelectedIndex = -1;
             }
             catch (Exception ex)
             {
@@ -91,49 +75,11 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-
-                    string query = @"
-                        SELECT DISTINCT 
-                            b.namaBarang AS [Nama Barang],
-                            b.stok AS [Jumlah Saat Ini],
-                            CASE 
-                                WHEN b.tipeBarang = 0 THEN 'Barang Habis Pakai'
-                                WHEN b.tipeBarang = 1 THEN 'Aset Tetap'
-                                ELSE 'Tidak Diketahui'
-                            END AS [Jenis Barang],
-                            b.satuan AS [Satuan]
-                        FROM [master].[barang] b
-                        LEFT JOIN [master].[merk] m ON b.idMerk = m.idMerk ";
-
-                    if (idSemesterFilter.HasValue)
-                    {
-                        query += @"
-                        INNER JOIN [transaction].[permintaanBarang] p ON b.idBarang = p.idBarang
-                        WHERE p.idSemester = @idSemester";
-                    }
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        if (idSemesterFilter.HasValue)
-                        {
-                            cmd.Parameters.AddWithValue("@idSemester", idSemesterFilter.Value);
-                        }
-
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            DataTable dt = new DataTable();
-                            da.Fill(dt);
-
-                            dgvReportStok.DataSource = dt;
-                            dgvReportStok.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-                            dgvReportStok.ReadOnly = true;
-                            dgvReportStok.AllowUserToAddRows = false;
-                        }
-                    }
-                }
+                DataTable dt = DAL.GetReportStokData(idSemesterFilter);
+                dgvReportStok.DataSource = dt;
+                dgvReportStok.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                dgvReportStok.ReadOnly = true;
+                dgvReportStok.AllowUserToAddRows = false;
             }
             catch (Exception ex)
             {
