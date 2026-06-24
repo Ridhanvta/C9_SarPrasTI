@@ -28,34 +28,32 @@ namespace ManajemenSarPras
         /// </summary>
         private void InitializeComponent()
         {
-            this.crystalReportViewer1 = new CrystalDecisions.Windows.Forms.CrystalReportViewer();
-            this.reportLog1 = new ManajemenSarPras.reportLog();
+            this.crvLog = new CrystalDecisions.Windows.Forms.CrystalReportViewer();
             this.SuspendLayout();
             // 
-            // crystalReportViewer1
+            // crvLog
             // 
-            this.crystalReportViewer1.ActiveViewIndex = 0;
-            this.crystalReportViewer1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.crystalReportViewer1.Cursor = System.Windows.Forms.Cursors.Default;
-            this.crystalReportViewer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.crystalReportViewer1.Location = new System.Drawing.Point(0, 0);
-            this.crystalReportViewer1.Name = "crystalReportViewer1";
-            this.crystalReportViewer1.ReportSource = this.reportLog1;
-            this.crystalReportViewer1.ShowCloseButton = false;
-            this.crystalReportViewer1.ShowCopyButton = false;
-            this.crystalReportViewer1.ShowGroupTreeButton = false;
-            this.crystalReportViewer1.ShowParameterPanelButton = false;
-            this.crystalReportViewer1.ShowRefreshButton = false;
-            this.crystalReportViewer1.Size = new System.Drawing.Size(1069, 599);
-            this.crystalReportViewer1.TabIndex = 0;
-            this.crystalReportViewer1.ToolPanelView = CrystalDecisions.Windows.Forms.ToolPanelViewType.None;
+            this.crvLog.ActiveViewIndex = -1;
+            this.crvLog.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.crvLog.Cursor = System.Windows.Forms.Cursors.Default;
+            this.crvLog.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.crvLog.Location = new System.Drawing.Point(0, 0);
+            this.crvLog.Name = "crvLog";
+            this.crvLog.ShowCloseButton = false;
+            this.crvLog.ShowCopyButton = false;
+            this.crvLog.ShowGroupTreeButton = false;
+            this.crvLog.ShowParameterPanelButton = false;
+            this.crvLog.ShowRefreshButton = false;
+            this.crvLog.Size = new System.Drawing.Size(1069, 599);
+            this.crvLog.TabIndex = 0;
+            this.crvLog.ToolPanelView = CrystalDecisions.Windows.Forms.ToolPanelViewType.None;
             // 
             // cetakDataLog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1069, 599);
-            this.Controls.Add(this.crystalReportViewer1);
+            this.Controls.Add(this.crvLog);
             this.Name = "cetakDataLog";
             this.Text = "cetakDataLog";
             this.ResumeLayout(false);
@@ -64,7 +62,7 @@ namespace ManajemenSarPras
 
         #endregion
 
-        public CrystalDecisions.Windows.Forms.CrystalReportViewer crystalReportViewer1;
-        private reportLog reportLog1;
+        public CrystalDecisions.Windows.Forms.CrystalReportViewer crvLog;
+        private rptLog reportLog1;
     }
 }
