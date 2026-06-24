@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -30,62 +30,12 @@ namespace ManajemenSarPras
                 {
                     if (conn == null) return;
 
-                    // --- QUERY 1: UNTUK HALAMAN 1 (REKAP GLOBAL) ---
-                    string querySummary = @"
-                SELECT 
-                    b.namaBarang AS [NamaBarang],
-                    b.stok AS [Stok],
-                    CASE WHEN b.tipeBarang = 0 THEN 'Barang Habis Pakai' ELSE 'Aset Tetap' END AS [JenisBarang],
-                    b.satuan AS [Satuan]
-                FROM [master].[barang] b";
-
-                    // --- QUERY 2: UNTUK HALAMAN 2 (DETAIL ASET, KONDISI TERBARU & SPESIFIKASI) ---
-                    string queryDetail = @"
-                SELECT 
-                    b.namaBarang AS [NamaBarang],
-                    r.namaRuangan AS [Ruangan],
-                    CASE 
-                        WHEN m_latest.kondisi = 1 THEN 'Baik'
-                        WHEN m_latest.kondisi = 0 THEN 'Rusak'
-                        ELSE 'Belum Dicek'
-                    END AS [Kondisi],
-                    CASE 
-                        WHEN db.spesifikasi IS NOT NULL THEN db.spesifikasi 
-                        ELSE '-' 
-                    END AS [Spesifikasi],
-                    COUNT(db.idDetailBarang) AS [Jumlah]
-                FROM [master].[barang] b
-                INNER JOIN [transaction].[detailBarang] db ON b.idBarang = db.idBarang
-                INNER JOIN [master].[ruangan] r ON db.idRuangan = r.idRuangan
-                LEFT JOIN (
-                    SELECT idDetailBarang, kondisi
-                    FROM (
-                        SELECT idDetailBarang, kondisi, 
-                               ROW_NUMBER() OVER(PARTITION BY idDetailBarang ORDER BY tglCek DESC, idMaintenance DESC) as rn
-                        FROM [transaction].[maintenance]
-                    ) tmp WHERE rn = 1
-                ) m_latest ON db.idDetailBarang = m_latest.idDetailBarang
-                WHERE b.tipeBarang = 1 ";
-
-                    if (idSemesterFilter.HasValue)
-                    {
-                        string filterSem = @" 
-                    AND EXISTS (
-                        SELECT 1 FROM [transaction].[permintaanBarang] p 
-                        WHERE p.idBarang = b.idBarang AND p.idSemester = @idSemester
-                    )";
-                        querySummary += filterSem;
-                        queryDetail += filterSem;
-                    }
-
-                    // Spesifikasi wajib masuk ke GROUP BY
-                    queryDetail += " GROUP BY b.namaBarang, r.namaRuangan, m_latest.kondisi, db.spesifikasi";
-
                     List<ReportSummary> listSummary = new List<ReportSummary>();
                     List<ReportDetail> listDetail = new List<ReportDetail>();
 
-                    using (SqlCommand cmd = new SqlCommand(querySummary, conn))
+                    using (SqlCommand cmd = new SqlCommand("[dbo].[sp_CetakStokSummary]", conn))
                     {
+                        cmd.CommandType = CommandType.StoredProcedure;
                         if (idSemesterFilter.HasValue) cmd.Parameters.AddWithValue("@idSemester", idSemesterFilter.Value);
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
@@ -102,8 +52,9 @@ namespace ManajemenSarPras
                         }
                     }
 
-                    using (SqlCommand cmd = new SqlCommand(queryDetail, conn))
+                    using (SqlCommand cmd = new SqlCommand("[dbo].[sp_CetakStokDetail]", conn))
                     {
+                        cmd.CommandType = CommandType.StoredProcedure;
                         if (idSemesterFilter.HasValue) cmd.Parameters.AddWithValue("@idSemester", idSemesterFilter.Value);
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {

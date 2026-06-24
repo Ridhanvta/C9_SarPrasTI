@@ -32,7 +32,7 @@ namespace ManajemenSarPras
             this.txtJumlahBarang.KeyPress += new KeyPressEventHandler(txtStok_KeyPress);
             this.cmbTipeBarang.SelectedIndexChanged += new EventHandler(cmbTipeBarang_SelectedIndexChanged);
 
-            this.btnTambahBarang.Click += new EventHandler(btnSimpan_Click);
+
             this.txtReset.Click += new EventHandler(btnBatal_Click);
             this.button3.Click += new EventHandler(button3_Click);
 
@@ -323,9 +323,9 @@ namespace ManajemenSarPras
                 if (result != null) return Convert.ToInt32(result);
             }
 
-            string insertQ = "INSERT INTO master.merk (namaMerk) OUTPUT INSERTED.idMerk VALUES (@nama)";
-            using (var cmd = new SqlCommand(insertQ, conn, trans))
+            using (var cmd = new SqlCommand("[master].[sp_InsertMerk]", conn, trans))
             {
+                cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@nama", namaMerk);
                 return (int)cmd.ExecuteScalar();
             }
@@ -398,31 +398,19 @@ namespace ManajemenSarPras
                     try
                     {
                         int resolvedIdMerk = GetOrCreateMerk(cmbMerk.Text, conn, transaction);
-                        string query;
-                        string finalIdBarang;
+                        string finalIdBarang = isEditMode ? originalIdBarang : GenerateIdBarangOtomatis(cmbMerk.Text, tipeInput, conn, transaction);
 
-                        if (isEditMode)
+                        using (var cmd = new SqlCommand("[master].[sp_ManageBarang]", conn, transaction))
                         {
-                            finalIdBarang = originalIdBarang;
-                            query = "UPDATE master.barang SET namaBarang = @nama, idMerk = @idMerk, stok = @stok, satuan = @satuan WHERE idBarang = @idAsli";
-                        }
-                        else
-                        {
-                            finalIdBarang = GenerateIdBarangOtomatis(cmbMerk.Text, tipeInput, conn, transaction);
-                            query = "INSERT INTO master.barang (idBarang, namaBarang, idMerk, stok, tipeBarang, satuan) VALUES (@id, @nama, @idMerk, @stok, @tipe, @satuan)";
-                        }
-
-                        using (var cmd = new SqlCommand(query, conn, transaction))
-                        {
-                            cmd.Parameters.AddWithValue("@id", finalIdBarang);
-                            cmd.Parameters.AddWithValue("@nama", txtNamaBarang.Text.Trim());
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@Action", isEditMode ? "UPDATE" : "INSERT");
+                            cmd.Parameters.AddWithValue("@idBarang", finalIdBarang);
+                            cmd.Parameters.AddWithValue("@namaBarang", txtNamaBarang.Text.Trim());
                             cmd.Parameters.AddWithValue("@idMerk", resolvedIdMerk);
                             cmd.Parameters.AddWithValue("@stok", stokInput);
                             cmd.Parameters.AddWithValue("@satuan", satuanInput);
-
-                            if (!isEditMode) cmd.Parameters.AddWithValue("@tipe", tipeInput);
-                            if (isEditMode) cmd.Parameters.AddWithValue("@idAsli", originalIdBarang);
-
+                            cmd.Parameters.AddWithValue("@tipeBarang", tipeInput);
+                            cmd.Parameters.AddWithValue("@isiKonversi", 1);
                             cmd.ExecuteNonQuery();
                         }
 
@@ -457,9 +445,10 @@ namespace ManajemenSarPras
                 object result = cmd.ExecuteScalar();
                 if (result != null) return Convert.ToInt32(result);
             }
-            using (var cmd = new SqlCommand("INSERT INTO master.gedung (namaGedung) OUTPUT INSERTED.idGedung VALUES (@nama)", conn, trans))
+            using (var cmd = new SqlCommand("[master].[sp_InsertGedung]", conn, trans))
             {
-                cmd.Parameters.AddWithValue("@nama", namaGedung.Trim());
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@namaGedung", namaGedung.Trim());
                 return (int)cmd.ExecuteScalar();
             }
         }
@@ -475,10 +464,11 @@ namespace ManajemenSarPras
                 object result = cmd.ExecuteScalar();
                 if (result != null) return Convert.ToInt32(result);
             }
-            using (var cmd = new SqlCommand("INSERT INTO master.ruangan (idGedung, namaRuangan) OUTPUT INSERTED.idRuangan VALUES (@idGedung, @nama)", conn, trans))
+            using (var cmd = new SqlCommand("[master].[sp_InsertRuangan]", conn, trans))
             {
+                cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@idGedung", idGedung);
-                cmd.Parameters.AddWithValue("@nama", namaRuangan.Trim());
+                cmd.Parameters.AddWithValue("@namaRuangan", namaRuangan.Trim());
                 return (int)cmd.ExecuteScalar();
             }
         }
@@ -647,16 +637,17 @@ namespace ManajemenSarPras
                                 stokAwal = dtPreviewExcel.Select($"NamaBarang = '{namaBarang}' AND Merk = '{merk}'").Length;
                             }
 
-                            string insertMasterQ = "INSERT INTO master.barang (idBarang, namaBarang, stok, tipeBarang, idMerk, satuan, isiKonversi) VALUES (@id, @nama, @stok, @tipe, @idMerk, @satuan, @konversi)";
-                            using (var cmdM = new SqlCommand(insertMasterQ, conn, transaction))
+                            using (var cmdM = new SqlCommand("[master].[sp_ManageBarang]", conn, transaction))
                             {
-                                cmdM.Parameters.AddWithValue("@id", idBarang);
-                                cmdM.Parameters.AddWithValue("@nama", namaBarang);
-                                cmdM.Parameters.AddWithValue("@stok", stokAwal);
-                                cmdM.Parameters.AddWithValue("@tipe", tipeBarang);
+                                cmdM.CommandType = CommandType.StoredProcedure;
+                                cmdM.Parameters.AddWithValue("@Action", "INSERT");
+                                cmdM.Parameters.AddWithValue("@idBarang", idBarang);
+                                cmdM.Parameters.AddWithValue("@namaBarang", namaBarang);
                                 cmdM.Parameters.AddWithValue("@idMerk", idMerk);
+                                cmdM.Parameters.AddWithValue("@stok", stokAwal);
+                                cmdM.Parameters.AddWithValue("@tipeBarang", tipeBarang);
                                 cmdM.Parameters.AddWithValue("@satuan", satuan);
-                                cmdM.Parameters.AddWithValue("@konversi", isiKonversi);
+                                cmdM.Parameters.AddWithValue("@isiKonversi", isiKonversi);
                                 cmdM.ExecuteNonQuery();
                             }
                             cacheMasterBarang.Add(masterKey, idBarang);
@@ -681,15 +672,15 @@ namespace ManajemenSarPras
                             int idGedung = GetOrCreateGedung(gedung, conn, transaction);
                             int idRuangan = GetOrCreateRuangan(ruangan, idGedung, conn, transaction);
 
-                            string insertDetailQ = "INSERT INTO [transaction].[detailBarang] (idDetailBarang, idBarang, idRuangan, spesifikasi, satuan, idSemesterMasuk, tglMasuk, statusAset) VALUES (@idDetail, @idBarang, @idRuangan, @spek, @satuan, @idSemester, @tglMasuk, @statusAset)";
-                            using (var cmdD = new SqlCommand(insertDetailQ, conn, transaction))
+                            using (var cmdD = new SqlCommand("[transaction].[sp_InsertDetailBarang]", conn, transaction))
                             {
-                                cmdD.Parameters.AddWithValue("@idDetail", idDetail);
+                                cmdD.CommandType = CommandType.StoredProcedure;
+                                cmdD.Parameters.AddWithValue("@idDetailBarang", idDetail);
                                 cmdD.Parameters.AddWithValue("@idBarang", idBarang);
                                 cmdD.Parameters.AddWithValue("@idRuangan", idRuangan);
-                                cmdD.Parameters.AddWithValue("@spek", spesifikasi);
+                                cmdD.Parameters.AddWithValue("@spesifikasi", spesifikasi);
                                 cmdD.Parameters.AddWithValue("@satuan", satuan);
-                                cmdD.Parameters.AddWithValue("@idSemester", idSemesterMasuk);
+                                cmdD.Parameters.AddWithValue("@idSemesterMasuk", idSemesterMasuk);
                                 cmdD.Parameters.AddWithValue("@tglMasuk", DateTime.Now);
                                 cmdD.Parameters.AddWithValue("@statusAset", 1);
                                 cmdD.ExecuteNonQuery();

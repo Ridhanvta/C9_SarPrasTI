@@ -1,4 +1,4 @@
-﻿using SatprasDesktopApp.Config;
+using SatprasDesktopApp.Config;
 using System;
 using System.Data;
 using System.Data.SqlClient;
@@ -13,9 +13,7 @@ namespace ManajemenSarPras
             InitializeComponent();
 
             // Mempertahankan struktur Hardcode Event Binding
-            this.Load += new EventHandler(formSemester_Load);
-            this.dataGridView1.CellClick += new DataGridViewCellEventHandler(dataGridView1_CellClick);
-            this.txtCari.TextChanged += new EventHandler(txtCari_TextChanged);
+
         }
 
         private void btnKembali_Click(object sender, EventArgs e)

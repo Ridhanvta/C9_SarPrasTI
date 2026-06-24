@@ -372,13 +372,13 @@ namespace ManajemenSarPras
                     {
                         if (isEditMode)
                         {
-                            string qUpdate = "UPDATE [transaction].detailBarang SET idRuangan = @ruang, spesifikasi = @spec, satuan = @satuan WHERE idDetailBarang = @idAsli";
-                            using (var cmd = new SqlCommand(qUpdate, conn, transaction))
+                            using (var cmd = new SqlCommand("[transaction].[sp_UpdateDetailBarang]", conn, transaction))
                             {
-                                cmd.Parameters.AddWithValue("@ruang", Convert.ToInt32(cmbRuangan.SelectedValue));
-                                cmd.Parameters.AddWithValue("@spec", txtSpesifikasi.Text.Trim());
+                                cmd.CommandType = CommandType.StoredProcedure;
+                                cmd.Parameters.AddWithValue("@idRuangan", Convert.ToInt32(cmbRuangan.SelectedValue));
+                                cmd.Parameters.AddWithValue("@spesifikasi", txtSpesifikasi.Text.Trim());
                                 cmd.Parameters.AddWithValue("@satuan", satuanFinal);
-                                cmd.Parameters.AddWithValue("@idAsli", originalIdDetail);
+                                cmd.Parameters.AddWithValue("@idDetailBarang", originalIdDetail);
                                 cmd.ExecuteNonQuery();
                             }
                         }
@@ -397,15 +397,15 @@ namespace ManajemenSarPras
 
                                 string finalIdDetail = $"{selectedIdBarang}-{nextSequence.ToString("D3")}";
 
-                                string qInsert = "INSERT INTO [transaction].detailBarang (idDetailBarang, idBarang, idRuangan, spesifikasi, satuan, idSemesterMasuk, tglMasuk, statusAset) VALUES (@id, @barang, @ruang, @spec, @satuan, @idSemester, @tglMasuk, @statusAset)";
-                                using (var cmdIn = new SqlCommand(qInsert, conn, transaction))
+                                using (var cmdIn = new SqlCommand("[transaction].[sp_InsertDetailBarang]", conn, transaction))
                                 {
-                                    cmdIn.Parameters.AddWithValue("@id", finalIdDetail);
-                                    cmdIn.Parameters.AddWithValue("@barang", selectedIdBarang);
-                                    cmdIn.Parameters.AddWithValue("@ruang", Convert.ToInt32(cmbRuangan.SelectedValue));
-                                    cmdIn.Parameters.AddWithValue("@spec", txtSpesifikasi.Text.Trim());
+                                    cmdIn.CommandType = CommandType.StoredProcedure;
+                                    cmdIn.Parameters.AddWithValue("@idDetailBarang", finalIdDetail);
+                                    cmdIn.Parameters.AddWithValue("@idBarang", selectedIdBarang);
+                                    cmdIn.Parameters.AddWithValue("@idRuangan", Convert.ToInt32(cmbRuangan.SelectedValue));
+                                    cmdIn.Parameters.AddWithValue("@spesifikasi", txtSpesifikasi.Text.Trim());
                                     cmdIn.Parameters.AddWithValue("@satuan", satuanFinal);
-                                    cmdIn.Parameters.AddWithValue("@idSemester", idSemesterMasuk);
+                                    cmdIn.Parameters.AddWithValue("@idSemesterMasuk", idSemesterMasuk);
                                     cmdIn.Parameters.AddWithValue("@tglMasuk", DateTime.Now);
                                     cmdIn.Parameters.AddWithValue("@statusAset", 1);
                                     cmdIn.ExecuteNonQuery();
