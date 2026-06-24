@@ -200,9 +200,9 @@ namespace ManajemenSarPras
                             rptDoc.SetDataSource(dtCetak);
 
                             // Ganti 'FormPrintViewer' dengan nama Form yang ada CrystalReportViewer-nya
-                            cetakDataStok frmViewer = new cetakDataStok();
-                            frmViewer.crystalReportViewer1.ReportSource = rptDoc;
-                            frmViewer.ShowDialog();
+                            //cetakDataStok frmViewer = new cetakDataStok();
+                            //frmViewer.crystalReportViewer1.ReportSource = rptDoc;
+                            //frmViewer.ShowDialog();
                             
 
                             MessageBox.Show("Sistem udah siap nyetak! Tinggal uncomment kode Crystal Report-nya.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);

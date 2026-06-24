@@ -37,18 +37,15 @@ namespace ManajemenSarPras
 
         private void btnLoad_Click(object sender, EventArgs e)
         {
-            // Validasi menggunakan SelectedValue dari data-bound combobox
             if (cmbTahunAjaran.SelectedValue == null || cmbTahunAjaran.SelectedIndex == -1)
             {
                 MessageBox.Show("Mohon untuk memilih Tahun Ajaran terlebih dahulu", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // Ambil ID Semester (ValueMember) buat filter query, dan Teks (DisplayMember) buat judul chart
             int idSemesterTerpilih = Convert.ToInt32(cmbTahunAjaran.SelectedValue);
             string namaSemesterTerpilih = cmbTahunAjaran.Text;
 
-            // Panggil fungsi chart dengan melempar ID-nya
             loadDataChart(idSemesterTerpilih, namaSemesterTerpilih);
         }
 
@@ -60,7 +57,6 @@ namespace ManajemenSarPras
                 {
                     if (conn == null) return;
 
-                    // Ambil id dan teksnya dari tabel master semester
                     string query = "SELECT idSemester, tahunAjaran FROM [master].[semester]";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -71,10 +67,10 @@ namespace ManajemenSarPras
                             da.Fill(dt);
 
                             cmbTahunAjaran.DataSource = dt;
-                            cmbTahunAjaran.DisplayMember = "tahunAjaran"; // Kolom teks yang tampil
-                            cmbTahunAjaran.ValueMember = "idSemester";    // Kolom ID asli di database
+                            cmbTahunAjaran.DisplayMember = "tahunAjaran";
+                            cmbTahunAjaran.ValueMember = "idSemester";
                             cmbTahunAjaran.DropDownStyle = ComboBoxStyle.DropDownList;
-                            cmbTahunAjaran.SelectedIndex = -1; // Set default kosong di awal
+                            cmbTahunAjaran.SelectedIndex = -1;
                         }
                     }
                 }
@@ -85,7 +81,6 @@ namespace ManajemenSarPras
             }
         }
 
-        // Kita ubah parameternya menerima ID (int) dan nama text buat judul
         public void loadDataChart(int idSemesterFilter, string namaSemester)
         {
             chartBarang.Series.Clear();
@@ -101,6 +96,7 @@ namespace ManajemenSarPras
             ca.BackColor = Color.WhiteSmoke;
             chartBarang.ChartAreas.Add(ca);
 
+            // Filter combo box tetap dipakai buat dinamisasi judul chart
             chartBarang.Titles.Add($"Grafik Stok Barang Aktual - Tahun Ajaran {namaSemester}");
 
             Series series = new Series("StokBarang");
@@ -115,19 +111,17 @@ namespace ManajemenSarPras
                 {
                     if (conn == null) return;
 
-                    // Query nembak b.stok (Stok Aktual) dengan filter p.idSemester (Lebih akurat pake int)
+                    // Kunci Solusi: Langsung tembak ke tabel master barang tanpa INNER JOIN
                     string query = @"
-                        SELECT DISTINCT 
-                            b.namaBarang, 
-                            b.stok AS StokAktual
-                        FROM [transaction].[permintaanBarang] p
-                        INNER JOIN [master].[barang] b ON p.idBarang = b.idBarang
-                        WHERE p.idSemester = @idSemester AND b.tipeBarang = 0";
+                SELECT 
+                    namaBarang, 
+                    stok AS StokAktual
+                FROM [master].[barang]";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@idSemester", idSemesterFilter);
-
+                        // Kita nggak perlu masukin parameter @idSemester ke SQL lagi
+                        // karena kita narik stok aktual global, bukan stok per transaksi
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -135,6 +129,7 @@ namespace ManajemenSarPras
                                 string namaBarang = reader["namaBarang"].ToString();
                                 int totalStok = Convert.ToInt32(reader["StokAktual"]);
 
+                                // Masukin semua barang ke dalam chart
                                 series.Points.AddXY(namaBarang, totalStok);
                             }
                         }
@@ -149,7 +144,6 @@ namespace ManajemenSarPras
 
         private void grafik_Load(object sender, EventArgs e)
         {
-            // Panggil fungsi buatan kita yang sudah terstandarisasi DatabaseConfig
             LoadComboTahunAjaran();
         }
     }
