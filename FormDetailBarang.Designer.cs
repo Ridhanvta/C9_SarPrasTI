@@ -1,4 +1,4 @@
-﻿namespace ManajemenSarPras
+namespace ManajemenSarPras
 {
     partial class FormDetailBarang
     {
@@ -66,6 +66,9 @@
             // 
             this.dgvDetail.AllowUserToAddRows = false;
             this.dgvDetail.AllowUserToDeleteRows = false;
+            this.dgvDetail.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvDetail.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvDetail.Location = new System.Drawing.Point(337, 136);
             this.dgvDetail.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
@@ -166,6 +169,7 @@
             // 
             // txtCari
             // 
+            this.txtCari.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtCari.Location = new System.Drawing.Point(439, 92);
             this.txtCari.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtCari.Name = "txtCari";
@@ -175,6 +179,7 @@
             // 
             // labelCariDetailBarang
             // 
+            this.labelCariDetailBarang.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.labelCariDetailBarang.AutoSize = true;
             this.labelCariDetailBarang.Location = new System.Drawing.Point(338, 94);
             this.labelCariDetailBarang.Margin = new System.Windows.Forms.Padding(3, 0, 0, 0);

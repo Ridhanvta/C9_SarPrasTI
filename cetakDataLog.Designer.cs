@@ -1,4 +1,4 @@
-﻿namespace ManajemenSarPras
+namespace ManajemenSarPras
 {
     partial class cetakDataLog
     {
@@ -64,7 +64,7 @@
 
         #endregion
 
-        private CrystalDecisions.Windows.Forms.CrystalReportViewer crystalReportViewer1;
+        public CrystalDecisions.Windows.Forms.CrystalReportViewer crystalReportViewer1;
         private reportLog reportLog1;
     }
 }

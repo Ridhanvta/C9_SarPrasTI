@@ -1,4 +1,4 @@
-﻿using SatprasDesktopApp.Config;
+using SatprasDesktopApp.Config;
 using System;
 using System.Data;
 using System.Data.SqlClient;
@@ -210,12 +210,15 @@ namespace ManajemenSarPras
                             db.satuan AS [Satuan],
                             g.namaGedung AS [Gedung],
                             r.namaRuangan AS [Lokasi Ruangan],
+                            db.tglMasuk AS [Tanggal Masuk],
+                            s.tahunAjaran AS [Semester],
                             b.idBarang, g.idGedung, r.idRuangan, b.tipeBarang
                         FROM [transaction].detailBarang db
                         LEFT JOIN [master].barang b ON db.idBarang = b.idBarang
                         LEFT JOIN [master].merk m ON b.idMerk = m.idMerk 
                         LEFT JOIN [master].ruangan r ON db.idRuangan = r.idRuangan
-                        LEFT JOIN [master].gedung g ON r.idGedung = g.idGedung";
+                        LEFT JOIN [master].gedung g ON r.idGedung = g.idGedung
+                        LEFT JOIN [master].semester s ON db.idSemesterMasuk = s.idSemester";
 
                     if (!string.IsNullOrEmpty(keyword))
                     {
@@ -235,6 +238,12 @@ namespace ManajemenSarPras
                             bsDetail.DataSource = dt;
                             bindingNavigator1.BindingSource = bsDetail;
                             dgvDetail.DataSource = bsDetail;
+                            
+                            if (dgvDetail.Columns["tipeBarang"] != null) dgvDetail.Columns["tipeBarang"].Visible = false;
+                            if (dgvDetail.Columns["idBarang"] != null) dgvDetail.Columns["idBarang"].Visible = false;
+                            if (dgvDetail.Columns["idGedung"] != null) dgvDetail.Columns["idGedung"].Visible = false;
+                            if (dgvDetail.Columns["idRuangan"] != null) dgvDetail.Columns["idRuangan"].Visible = false;
+
                             isResetting = false;
                         }
                     }
@@ -265,6 +274,28 @@ namespace ManajemenSarPras
             cmbBarang.Focus();
 
             isResetting = false; // Buka kembali gembok sensor
+        }
+
+        private string GetActiveSemesterFromSystem()
+        {
+            int tahunSekarang = DateTime.Now.Year;
+            int bulanSekarang = DateTime.Now.Month;
+
+            string tipeSemester;
+            string tahunAjaran;
+
+            if (bulanSekarang >= 7)
+            {
+                tipeSemester = "Ganjil";
+                tahunAjaran = $"{tahunSekarang}/{tahunSekarang + 1}";
+            }
+            else
+            {
+                tipeSemester = "Genap";
+                tahunAjaran = $"{tahunSekarang - 1}/{tahunSekarang}";
+            }
+
+            return $"{tahunAjaran} ({tipeSemester})";
         }
 
         private void btnBatal_Click(object sender, EventArgs e)
@@ -316,6 +347,25 @@ namespace ManajemenSarPras
                 using (var conn = DatabaseConfig.GetConnection())
                 {
                     if (conn == null) return;
+
+                    int idSemesterMasuk = 0;
+                    if (!isEditMode)
+                    {
+                        string currentSemesterText = GetActiveSemesterFromSystem();
+                        string qSemester = "SELECT idSemester FROM master.semester WHERE tahunAjaran = @tahunAjaran";
+                        using (SqlCommand cmdSem = new SqlCommand(qSemester, conn))
+                        {
+                            cmdSem.Parameters.AddWithValue("@tahunAjaran", currentSemesterText);
+                            object result = cmdSem.ExecuteScalar();
+                            if (result == null || result == DBNull.Value)
+                            {
+                                MessageBox.Show($"Semester Aktif ({currentSemesterText}) belum terdaftar di database!\nSilakan daftarkan terlebih dahulu di menu Semester.", "Akses Diblokir", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                return;
+                            }
+                            idSemesterMasuk = Convert.ToInt32(result);
+                        }
+                    }
+
                     SqlTransaction transaction = conn.BeginTransaction();
 
                     try
@@ -347,7 +397,7 @@ namespace ManajemenSarPras
 
                                 string finalIdDetail = $"{selectedIdBarang}-{nextSequence.ToString("D3")}";
 
-                                string qInsert = "INSERT INTO [transaction].detailBarang (idDetailBarang, idBarang, idRuangan, spesifikasi, satuan) VALUES (@id, @barang, @ruang, @spec, @satuan)";
+                                string qInsert = "INSERT INTO [transaction].detailBarang (idDetailBarang, idBarang, idRuangan, spesifikasi, satuan, idSemesterMasuk, tglMasuk, statusAset) VALUES (@id, @barang, @ruang, @spec, @satuan, @idSemester, @tglMasuk, @statusAset)";
                                 using (var cmdIn = new SqlCommand(qInsert, conn, transaction))
                                 {
                                     cmdIn.Parameters.AddWithValue("@id", finalIdDetail);
@@ -355,6 +405,9 @@ namespace ManajemenSarPras
                                     cmdIn.Parameters.AddWithValue("@ruang", Convert.ToInt32(cmbRuangan.SelectedValue));
                                     cmdIn.Parameters.AddWithValue("@spec", txtSpesifikasi.Text.Trim());
                                     cmdIn.Parameters.AddWithValue("@satuan", satuanFinal);
+                                    cmdIn.Parameters.AddWithValue("@idSemester", idSemesterMasuk);
+                                    cmdIn.Parameters.AddWithValue("@tglMasuk", DateTime.Now);
+                                    cmdIn.Parameters.AddWithValue("@statusAset", 1);
                                     cmdIn.ExecuteNonQuery();
                                 }
                             }
