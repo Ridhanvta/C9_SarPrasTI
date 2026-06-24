@@ -1,7 +1,7 @@
 using SatprasDesktopApp.Config;
 using System;
 using System.Data;
-using System.Data.SqlClient;
+
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -111,20 +111,11 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-                    string query = "SELECT * FROM [dbo].[vwDaftarRuangan]";
-                    using (SqlDataAdapter da = new SqlDataAdapter(query, conn))
-                    {
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
-                        cmbRuangan.DataSource = dt;
-                        cmbRuangan.DisplayMember = "namaRuangan";
-                        cmbRuangan.ValueMember = "idRuangan";
-                        cmbRuangan.SelectedIndex = -1;
-                    }
-                }
+                DataTable dt = DAL.GetDaftarRuangan();
+                cmbRuangan.DataSource = dt;
+                cmbRuangan.DisplayMember = "namaRuangan";
+                cmbRuangan.ValueMember = "idRuangan";
+                cmbRuangan.SelectedIndex = -1;
             }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Ruangan", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
@@ -133,27 +124,13 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-                    string query = "SELECT idSemester, tahunAjaran FROM [master].[semester] WHERE tahunAjaran = @active";
+                DataTable dt = DAL.GetSemesterAktif(GetActiveSemesterFromSystem());
+                cmbSemester.DataSource = dt;
+                cmbSemester.DisplayMember = "tahunAjaran";
+                cmbSemester.ValueMember = "idSemester";
 
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@active", GetActiveSemesterFromSystem());
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            DataTable dt = new DataTable();
-                            da.Fill(dt);
-                            cmbSemester.DataSource = dt;
-                            cmbSemester.DisplayMember = "tahunAjaran";
-                            cmbSemester.ValueMember = "idSemester";
-
-                            cmbSemester.Enabled = false; // Dikunci otomatis oleh sistem laptop
-                            if (dt.Rows.Count > 0) cmbSemester.SelectedIndex = 0;
-                        }
-                    }
-                }
+                cmbSemester.Enabled = false; // Dikunci otomatis oleh sistem laptop
+                if (dt.Rows.Count > 0) cmbSemester.SelectedIndex = 0;
             }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Semester", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
@@ -162,33 +139,8 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-
-                    // MENGAMBIL DATA LANGSUNG DARI TABEL MASTER (Kunci: Hanya barang habis pakai/Non-Maintenance -> tipeBarang = 0)
-                    // Format kolom disesuaikan dengan ID Detail Barang agar seragam
-                    string query = @"SELECT idBarang AS [ID], namaBarang AS [Nama Barang], stok AS [Total Stok (Pcs)], 
-                                    satuan AS [Satuan Master], isiKonversi AS [Isi Per Satuan]
-                                    FROM [master].[barang] WHERE tipeBarang = 0";
-
-                    if (!string.IsNullOrEmpty(keyword))
-                    {
-                        query += " AND (namaBarang LIKE @kw OR idBarang LIKE @kw)";
-                    }
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        if (!string.IsNullOrEmpty(keyword)) cmd.Parameters.AddWithValue("@kw", "%" + keyword + "%");
-
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            DataTable dt = new DataTable();
-                            da.Fill(dt);
-                            dataGridView1.DataSource = dt;
-                        }
-                    }
-                }
+                DataTable dt = DAL.GetKatalogBarangHabisPakai(keyword);
+                dataGridView1.DataSource = dt;
             }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Katalog Barang", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
@@ -197,29 +149,13 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-                    string query = "SELECT * FROM [dbo].[vwDataTransaksi]";
+                dtTransaksi = DAL.GetRiwayatTransaksi(keyword);
 
-                    if (!string.IsNullOrEmpty(keyword))
-                    {
-                        query += " WHERE [Barang] LIKE @kw OR [Peminta] LIKE @kw";
-                    }
-
-                    using (SqlDataAdapter da = new SqlDataAdapter(query, conn))
-                    {
-                        da.SelectCommand.Parameters.AddWithValue("@kw", "%" + keyword + "%");
-                        dtTransaksi = new DataTable();
-                        da.Fill(dtTransaksi);
-
-                        isResetting = true;
-                        navBindingSource.DataSource = dtTransaksi;
-                        dataGridView2.DataSource = navBindingSource;
-                        bindingNavigator1.BindingSource = navBindingSource;
-                        isResetting = false;
-                    }
-                }
+                isResetting = true;
+                navBindingSource.DataSource = dtTransaksi;
+                dataGridView2.DataSource = navBindingSource;
+                bindingNavigator1.BindingSource = navBindingSource;
+                isResetting = false;
             }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Riwayat Transaksi", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
@@ -333,19 +269,6 @@ namespace ManajemenSarPras
             }
         }
 
-        private int GetIdSemesterOtomatis(SqlConnection conn, SqlTransaction transaction)
-        {
-            string query = "SELECT idSemester FROM [master].[semester] WHERE tahunAjaran = @TA";
-            using (SqlCommand cmd = new SqlCommand(query, conn, transaction))
-            {
-                cmd.Parameters.AddWithValue("@TA", GetActiveSemesterFromSystem());
-                object result = cmd.ExecuteScalar();
-                if (result != null) return Convert.ToInt32(result);
-                else throw new Exception($"Tahun akademik '{GetActiveSemesterFromSystem()}' belum terdaftar di master data semester!");
-            }
-        }
-
-        // PROSES TRANSAKSI TAMBAH LOG PERMINTAAN BARANG
         private void btnSimpan_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtIdBarang.Text) || string.IsNullOrWhiteSpace(txtNma.Text) ||
@@ -403,47 +326,16 @@ namespace ManajemenSarPras
             // =======================================================
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
+                DAL.SimpanPermintaanBarang(txtIdBarang.Text.Trim(), Convert.ToInt32(cmbRuangan.SelectedValue), txtNma.Text.Trim(), totalJumlahDalamPcsAsli, GetActiveSemesterFromSystem());
+                MessageBox.Show($"Log Berhasil Disimpan! Permintaan sebanyak {jumlahRequested} {satuanDipilih} telah tercatat secara permanen.", "Transaksi Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                    SqlTransaction transaction = conn.BeginTransaction();
-
-                    try
-                    {
-                        int idSemesterAktif = GetIdSemesterOtomatis(conn, transaction);
-
-                        using (SqlCommand cmd = new SqlCommand("sp_SavePermintaanBarang", conn, transaction))
-                        {
-                            cmd.CommandType = CommandType.StoredProcedure;
-
-                            // Paksa parameter ID Log bernilai NULL agar Stored Procedure murni melakukan INSERT log baru (Anti Update)
-                            cmd.Parameters.AddWithValue("@idPB", DBNull.Value);
-                            cmd.Parameters.AddWithValue("@idB", txtIdBarang.Text.Trim());
-                            cmd.Parameters.AddWithValue("@idR", cmbRuangan.SelectedValue);
-                            cmd.Parameters.AddWithValue("@nama", txtNma.Text.Trim());
-
-                            // Kirimkan total kuantitas hasil kalkulasi Pcs murni ke Stored Procedure database
-                            cmd.Parameters.AddWithValue("@jml", totalJumlahDalamPcsAsli);
-                            cmd.Parameters.AddWithValue("@smt", idSemesterAktif);
-
-                            cmd.ExecuteNonQuery();
-                        }
-
-                        transaction.Commit();
-                        MessageBox.Show($"Log Berhasil Disimpan! Permintaan sebanyak {jumlahRequested} {satuanDipilih} telah tercatat secara permanen.", "Transaksi Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        RefreshSemuaTabel();
-                        ResetForm();
-                    }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        MessageBox.Show("Integritas Transaksi Gagal: " + ex.Message, "Sistem Menolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    }
-                }
+                RefreshSemuaTabel();
+                ResetForm();
             }
-            catch (Exception ex) { MessageBox.Show("Fatal Database Connection Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Integritas Transaksi Gagal: " + ex.Message, "Sistem Menolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void permintaanBarang_Load_1(object sender, EventArgs e) { }

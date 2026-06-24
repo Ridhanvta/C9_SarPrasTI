@@ -1,8 +1,8 @@
-﻿using SatprasDesktopApp.Config;
+using SatprasDesktopApp.Config;
 using System;
 using System.Data;
 using System.Data.SqlClient;
-using System.Text.RegularExpressions; // Tambahan untuk validasi lapis kedua (Regex)
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace ManajemenSarPras
@@ -45,41 +45,19 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (SqlConnection conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-                    DataTable dt = new DataTable();
+                DataTable dt = DAL.GetKaryawanGridData(keyword);
 
-                    if (string.IsNullOrEmpty(keyword))
-                    {
-                        // Menggunakan VIEW
-                        string query = "SELECT * FROM master.vw_DataKaryawan";
-                        SqlDataAdapter da = new SqlDataAdapter(query, conn);
-                        da.Fill(dt);
-                    }
-                    else
-                    {
-                        // Menggunakan STORED PROCEDURE SEARCH
-                        SqlCommand cmd = new SqlCommand("master.sp_ManageKaryawan", conn);
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.AddWithValue("@Action", "SEARCH");
-                        cmd.Parameters.AddWithValue("@namaKaryawan", keyword);
-                        SqlDataAdapter da = new SqlDataAdapter(cmd);
-                        da.Fill(dt);
-                    }
+                // KRUSIAL: Sinkronisasi Binding
+                richTextBox3.DataBindings.Clear(); // Hapus binding lama agar tidak blank
+                bindingSource1.DataSource = dt;
 
-                    // KRUSIAL: Sinkronisasi Binding
-                    richTextBox3.DataBindings.Clear(); // Hapus binding lama agar tidak blank
-                    bindingSource1.DataSource = dt;
+                bindingNavigator1.BindingSource = bindingSource1;
+                dataGridView1.DataSource = bindingSource1;
 
-                    bindingNavigator1.BindingSource = bindingSource1;
-                    dataGridView1.DataSource = bindingSource1;
+                // Pasang Binding Otomatis ke TextBox
+                richTextBox3.DataBindings.Add("Text", bindingSource1, "Nama Karyawan", true, DataSourceUpdateMode.OnPropertyChanged);
 
-                    // Pasang Binding Otomatis ke TextBox
-                    richTextBox3.DataBindings.Add("Text", bindingSource1, "Nama Karyawan", true, DataSourceUpdateMode.OnPropertyChanged);
-
-                    if (dataGridView1.Columns["ID"] != null) dataGridView1.Columns["ID"].Visible = false;
-                }
+                if (dataGridView1.Columns["ID"] != null) dataGridView1.Columns["ID"].Visible = false;
             }
             catch (Exception ex) { MessageBox.Show("Error Load: " + ex.Message); }
         }
@@ -125,23 +103,11 @@ namespace ManajemenSarPras
 
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-                    using (SqlCommand cmd = new SqlCommand("master.sp_ManageKaryawan", conn))
-                    {
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.AddWithValue("@Action", isEditMode ? "UPDATE" : "INSERT");
-                        cmd.Parameters.AddWithValue("@namaKaryawan", inputNama);
-                        if (isEditMode) cmd.Parameters.AddWithValue("@idKaryawan", originalIdKaryawan);
+                DAL.ManageKaryawan(isEditMode ? "UPDATE" : "INSERT", originalIdKaryawan, inputNama);
+                MessageBox.Show("Berhasil Simpan/Update!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                        cmd.ExecuteNonQuery();
-                        MessageBox.Show("Berhasil Simpan/Update!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        LoadDataKaryawan(); // Refresh Binding
-                        ResetForm();
-                    }
-                }
+                LoadDataKaryawan(); // Refresh Binding
+                ResetForm();
             }
             catch (Exception ex) { MessageBox.Show("Error Database: " + ex.Message); }
         }
@@ -154,20 +120,9 @@ namespace ManajemenSarPras
             {
                 try
                 {
-                    using (var conn = DatabaseConfig.GetConnection())
-                    {
-                        if (conn == null) return;
-                        using (SqlCommand cmd = new SqlCommand("master.sp_ManageKaryawan", conn))
-                        {
-                            cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.Parameters.AddWithValue("@Action", "DELETE");
-                            cmd.Parameters.AddWithValue("@idKaryawan", originalIdKaryawan);
-                            cmd.ExecuteNonQuery();
-
-                            LoadDataKaryawan();
-                            ResetForm();
-                        }
-                    }
+                    DAL.ManageKaryawan("DELETE", originalIdKaryawan, "");
+                    LoadDataKaryawan();
+                    ResetForm();
                 }
                 catch (SqlException ex)
                 {

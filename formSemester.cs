@@ -1,7 +1,7 @@
 using SatprasDesktopApp.Config;
 using System;
 using System.Data;
-using System.Data.SqlClient;
+
 using System.Windows.Forms;
 
 namespace ManajemenSarPras
@@ -63,50 +63,26 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (SqlConnection conn = DatabaseConfig.GetConnection())
+                DataTable dt = DAL.GetSemesterData(keyword);
+
+                txtTahunAjaran.DataBindings.Clear();
+                bindingSource1.DataSource = dt;
+
+                bindingNavigator1.BindingSource = bindingSource1;
+                dataGridView1.DataSource = bindingSource1;
+
+                txtTahunAjaran.DataBindings.Add("Text", bindingSource1, "Tahun Ajaran", true, DataSourceUpdateMode.OnPropertyChanged);
+
+                if (dt.Rows.Count > 0)
                 {
-                    if (conn == null) return;
-                    DataTable dt = new DataTable();
-
-                    if (string.IsNullOrEmpty(keyword))
-                    {
-                        string query = "SELECT * FROM master.vw_DataSemester";
-                        using (SqlCommand cmd = new SqlCommand(query, conn))
-                        {
-                            SqlDataAdapter da = new SqlDataAdapter(cmd);
-                            da.Fill(dt);
-                        }
-                    }
-                    else
-                    {
-                        string query = "SELECT * FROM master.vw_DataSemester WHERE [Tahun Ajaran] LIKE @keyword";
-                        using (SqlCommand cmd = new SqlCommand(query, conn))
-                        {
-                            cmd.Parameters.AddWithValue("@keyword", "%" + keyword + "%");
-                            SqlDataAdapter da = new SqlDataAdapter(cmd);
-                            da.Fill(dt);
-                        }
-                    }
-
-                    txtTahunAjaran.DataBindings.Clear();
-                    bindingSource1.DataSource = dt;
-
-                    bindingNavigator1.BindingSource = bindingSource1;
-                    dataGridView1.DataSource = bindingSource1;
-
-                    txtTahunAjaran.DataBindings.Add("Text", bindingSource1, "Tahun Ajaran", true, DataSourceUpdateMode.OnPropertyChanged);
-
-                    if (dt.Rows.Count > 0)
-                    {
-                        bindingSource1.MoveFirst();
-                    }
-                    else
-                    {
-                        txtTahunAjaran.Text = GetActiveSemesterFromSystem();
-                    }
-
-                    if (dataGridView1.Columns["ID"] != null) dataGridView1.Columns["ID"].Visible = false;
+                    bindingSource1.MoveFirst();
                 }
+                else
+                {
+                    txtTahunAjaran.Text = GetActiveSemesterFromSystem();
+                }
+
+                if (dataGridView1.Columns["ID"] != null) dataGridView1.Columns["ID"].Visible = false;
             }
             catch (Exception ex) { MessageBox.Show("Error Load Data: " + ex.Message); }
         }
@@ -149,41 +125,22 @@ namespace ManajemenSarPras
 
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
+                DAL.TambahSemester(inputTahun);
+                MessageBox.Show("Semester Aktif Berhasil Ditambahkan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                LoadDataSemester();
+                ResetForm();
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("sudah terdaftar"))
                 {
-                    if (conn == null) return;
-
-                    // VALIDASI ANTI-DUPLIKAT
-                    string checkQuery = "SELECT COUNT(*) FROM [master].[semester] WHERE [tahunAjaran] = @tahunAjaran";
-                    using (SqlCommand checkCmd = new SqlCommand(checkQuery, conn))
-                    {
-                        checkCmd.Parameters.AddWithValue("@tahunAjaran", inputTahun);
-                        int count = (int)checkCmd.ExecuteScalar();
-
-                        if (count > 0)
-                        {
-                            MessageBox.Show($"Semester '{inputTahun}' sudah terdaftar di database!",
-                                            "Validasi Tolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-                    }
-
-                    // Murni hanya menjalankan aksi INSERT saja ke Stored Procedure
-                    using (SqlCommand cmd = new SqlCommand("master.sp_ManageSemester", conn))
-                    {
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.AddWithValue("@Action", "INSERT");
-                        cmd.Parameters.AddWithValue("@tahunAjaran", inputTahun);
-
-                        cmd.ExecuteNonQuery();
-
-                        MessageBox.Show("Semester Aktif Berhasil Ditambahkan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        LoadDataSemester();
-                        ResetForm();
-                    }
+                    MessageBox.Show(ex.Message, "Validasi Tolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                else
+                {
+                    MessageBox.Show("Error: " + ex.Message);
                 }
             }
-            catch (Exception ex) { MessageBox.Show("Error: " + ex.Message); }
         }
 
         // Fungsi Hapus dikosongkan total demi keamanan data integritas kampus

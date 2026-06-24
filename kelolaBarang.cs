@@ -3,7 +3,7 @@ using SatprasDesktopApp.Config;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -120,25 +120,14 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-                    string query = "SELECT idMerk, namaMerk FROM master.merk";
-                    using (var da = new SqlDataAdapter(query, conn))
-                    {
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
-
-                        cmbMerk.DataSource = dt;
-                        cmbMerk.DisplayMember = "namaMerk";
-                        cmbMerk.ValueMember = "idMerk";
-
-                        cmbMerk.DropDownStyle = ComboBoxStyle.DropDown;
-                        cmbMerk.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-                        cmbMerk.AutoCompleteSource = AutoCompleteSource.ListItems;
-                        cmbMerk.SelectedIndex = -1;
-                    }
-                }
+                DataTable dt = DAL.GetMerkData();
+                cmbMerk.DataSource = dt;
+                cmbMerk.DisplayMember = "namaMerk";
+                cmbMerk.ValueMember = "idMerk";
+                cmbMerk.DropDownStyle = ComboBoxStyle.DropDown;
+                cmbMerk.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                cmbMerk.AutoCompleteSource = AutoCompleteSource.ListItems;
+                cmbMerk.SelectedIndex = -1;
             }
             catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
@@ -147,25 +136,15 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
+                DataTable dt = DAL.ExecuteQuery("SELECT DISTINCT namaBarang FROM master.barang");
+                AutoCompleteStringCollection collection = new AutoCompleteStringCollection();
+                foreach (DataRow row in dt.Rows)
                 {
-                    if (conn == null) return;
-                    string query = "SELECT DISTINCT namaBarang FROM master.barang";
-                    using (var cmd = new SqlCommand(query, conn))
-                    {
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            AutoCompleteStringCollection source = new AutoCompleteStringCollection();
-                            while (reader.Read())
-                            {
-                                source.Add(reader["namaBarang"].ToString());
-                            }
-                            txtNamaBarang.AutoCompleteCustomSource = source;
-                            txtNamaBarang.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-                            txtNamaBarang.AutoCompleteSource = AutoCompleteSource.CustomSource;
-                        }
-                    }
+                    collection.Add(row["namaBarang"].ToString());
                 }
+                txtNamaBarang.AutoCompleteCustomSource = collection;
+                txtNamaBarang.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                txtNamaBarang.AutoCompleteSource = AutoCompleteSource.CustomSource;
             }
             catch (Exception) { }
         }
@@ -174,54 +153,18 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
+                DataTable dt = DAL.GetBarangData(keyword);
 
-                    string query = @"
-                    SELECT 
-                        b.idBarang AS [ID/Kode Barang],
-                        b.namaBarang AS [Nama Barang],
-                        m.namaMerk AS [Merk],
-                        b.stok AS [Sisa Stok],
-                        b.satuan AS [Satuan],
-                        CASE WHEN b.tipeBarang = 1 THEN 'Aset Tetap (Rutin)' ELSE 'Habis Pakai (Non-Rutin)' END AS [Kategori],
-                        b.tipeBarang,
-                        b.idMerk 
-                    FROM master.barang b
-                    LEFT JOIN master.merk m ON b.idMerk = m.idMerk";
+                isResetting = true;
+                bsBarang.DataSource = dt;
+                bindingNavigator1.BindingSource = bsBarang;
+                dataGridView1.DataSource = bsBarang;
+                isResetting = false;
 
-                    if (!string.IsNullOrEmpty(keyword))
-                    {
-                        query += " WHERE b.namaBarang LIKE @keyword OR b.idBarang LIKE @keyword OR m.namaMerk LIKE @keyword";
-                    }
-
-                    using (var cmd = new SqlCommand(query, conn))
-                    {
-                        if (!string.IsNullOrEmpty(keyword))
-                        {
-                            cmd.Parameters.AddWithValue("@keyword", "%" + keyword + "%");
-                        }
-
-                        using (var da = new SqlDataAdapter(cmd))
-                        {
-                            DataTable dt = new DataTable();
-                            da.Fill(dt);
-
-                            isResetting = true;
-                            bsBarang.DataSource = dt;
-                            bindingNavigator1.BindingSource = bsBarang;
-                            dataGridView1.DataSource = bsBarang;
-                            isResetting = false;
-
-                            if (dataGridView1.Columns["tipeBarang"] != null)
-                                dataGridView1.Columns["tipeBarang"].Visible = false;
-
-                            if (dataGridView1.Columns["idMerk"] != null)
-                                dataGridView1.Columns["idMerk"].Visible = false;
-                        }
-                    }
-                }
+                if (dataGridView1.Columns["tipeBarang"] != null)
+                    dataGridView1.Columns["tipeBarang"].Visible = false;
+                if (dataGridView1.Columns["idMerk"] != null)
+                    dataGridView1.Columns["idMerk"].Visible = false;
             }
             catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
@@ -309,49 +252,8 @@ namespace ManajemenSarPras
         }
 
         // ==========================================
-        // FUNGSI 1: GET ATAU CREATE MERK OTOMATIS (TERSEDIA KEMBALI)
-        // ==========================================
-        private int GetOrCreateMerk(string namaMerk, SqlConnection conn, SqlTransaction trans)
-        {
-            namaMerk = namaMerk.Trim();
-            string checkQ = "SELECT idMerk FROM master.merk WHERE namaMerk = @nama";
-
-            using (var cmd = new SqlCommand(checkQ, conn, trans))
-            {
-                cmd.Parameters.AddWithValue("@nama", namaMerk);
-                object result = cmd.ExecuteScalar();
-                if (result != null) return Convert.ToInt32(result);
-            }
-
-            using (var cmd = new SqlCommand("[master].[sp_InsertMerk]", conn, trans))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@nama", namaMerk);
-                return (int)cmd.ExecuteScalar();
-            }
-        }
-
-        // ==========================================
         // FUNGSI 2: GENERATOR KODE BARANG OTOMATIS (TERSEDIA KEMBALI)
         // ==========================================
-        private string GenerateIdBarangOtomatis(string namaMerk, int tipeBarang, SqlConnection conn, SqlTransaction trans)
-        {
-            string cleanMerk = namaMerk.Trim().Replace(" ", "").ToUpper();
-            string singkatanMerk = cleanMerk.Length >= 3 ? cleanMerk.Substring(0, 3) : cleanMerk.PadRight(3, 'X');
-            string codePrefix = $"TI-{singkatanMerk}-{tipeBarang}-";
-
-            string countQuery = "SELECT COUNT(*) FROM master.barang WHERE idBarang LIKE @prefix + '%'";
-            int runningNumber = 1;
-
-            using (SqlCommand cmd = new SqlCommand(countQuery, conn, trans))
-            {
-                cmd.Parameters.AddWithValue("@prefix", codePrefix);
-                runningNumber = Convert.ToInt32(cmd.ExecuteScalar()) + 1;
-            }
-
-            return $"{codePrefix}{runningNumber.ToString("D3")}";
-        }
-
         private void btnSimpan_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtNamaBarang.Text) ||
@@ -390,86 +292,17 @@ namespace ManajemenSarPras
 
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-                    SqlTransaction transaction = conn.BeginTransaction();
+                string finalIdBarang = DAL.SimpanBarangMaster(isEditMode, originalIdBarang, txtNamaBarang.Text.Trim(), cmbMerk.Text, stokInput, tipeInput, satuanInput);
+                MessageBox.Show($"Data inventaris Master dengan Kode '{finalIdBarang}' [{satuanInput}] berhasil {(isEditMode ? "diperbarui" : "disimpan")}!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                    try
-                    {
-                        int resolvedIdMerk = GetOrCreateMerk(cmbMerk.Text, conn, transaction);
-                        string finalIdBarang = isEditMode ? originalIdBarang : GenerateIdBarangOtomatis(cmbMerk.Text, tipeInput, conn, transaction);
-
-                        using (var cmd = new SqlCommand("[master].[sp_ManageBarang]", conn, transaction))
-                        {
-                            cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.Parameters.AddWithValue("@Action", isEditMode ? "UPDATE" : "INSERT");
-                            cmd.Parameters.AddWithValue("@idBarang", finalIdBarang);
-                            cmd.Parameters.AddWithValue("@namaBarang", txtNamaBarang.Text.Trim());
-                            cmd.Parameters.AddWithValue("@idMerk", resolvedIdMerk);
-                            cmd.Parameters.AddWithValue("@stok", stokInput);
-                            cmd.Parameters.AddWithValue("@satuan", satuanInput);
-                            cmd.Parameters.AddWithValue("@tipeBarang", tipeInput);
-                            cmd.Parameters.AddWithValue("@isiKonversi", 1);
-                            cmd.ExecuteNonQuery();
-                        }
-
-                        transaction.Commit();
-                        MessageBox.Show($"Data inventaris Master dengan Kode '{finalIdBarang}' [{satuanInput}] berhasil {(isEditMode ? "diperbarui" : "disimpan")}!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        LoadComboMerk();
-                        LoadAutoCompleteNamaBarang();
-                        LoadDataBarang();
-                        ResetForm();
-                    }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        MessageBox.Show(ex.Message, "Validasi Sistem", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    }
-                }
+                LoadComboMerk();
+                LoadAutoCompleteNamaBarang();
+                LoadDataBarang();
+                ResetForm();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Kesalahan Database: " + ex.Message, "System Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-    
-        private int GetOrCreateGedung(string namaGedung, SqlConnection conn, SqlTransaction trans)
-        {
-            if (string.IsNullOrWhiteSpace(namaGedung)) return 0;
-            string query = "SELECT idGedung FROM master.gedung WHERE namaGedung = @nama";
-            using (var cmd = new SqlCommand(query, conn, trans))
-            {
-                cmd.Parameters.AddWithValue("@nama", namaGedung.Trim());
-                object result = cmd.ExecuteScalar();
-                if (result != null) return Convert.ToInt32(result);
-            }
-            using (var cmd = new SqlCommand("[master].[sp_InsertGedung]", conn, trans))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@namaGedung", namaGedung.Trim());
-                return (int)cmd.ExecuteScalar();
-            }
-        }
-
-        private int GetOrCreateRuangan(string namaRuangan, int idGedung, SqlConnection conn, SqlTransaction trans)
-        {
-            if (string.IsNullOrWhiteSpace(namaRuangan)) return 0;
-            string query = "SELECT idRuangan FROM master.ruangan WHERE namaRuangan = @nama AND idGedung = @idGedung";
-            using (var cmd = new SqlCommand(query, conn, trans))
-            {
-                cmd.Parameters.AddWithValue("@nama", namaRuangan.Trim());
-                cmd.Parameters.AddWithValue("@idGedung", idGedung);
-                object result = cmd.ExecuteScalar();
-                if (result != null) return Convert.ToInt32(result);
-            }
-            using (var cmd = new SqlCommand("[master].[sp_InsertRuangan]", conn, trans))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@idGedung", idGedung);
-                cmd.Parameters.AddWithValue("@namaRuangan", namaRuangan.Trim());
-                return (int)cmd.ExecuteScalar();
+                MessageBox.Show(ex.Message, "System Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -586,126 +419,18 @@ namespace ManajemenSarPras
             DialogResult dialog = MessageBox.Show($"Sistem akan mengeksekusi {dtPreviewExcel.Rows.Count} baris instruksi ke Database. Tindakan ini bersifat mutlak dan tidak bisa dibatalkan. Eksekusi?", "Konfirmasi Otorisasi", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (dialog != DialogResult.Yes) return;
 
-            using (var conn = DatabaseConfig.GetConnection())
+            try
             {
-                if (conn == null) return;
-                SqlTransaction transaction = conn.BeginTransaction();
-
-                try
-                {
-                    int idSemesterMasuk = 0;
-                    string currentSemesterText = GetActiveSemesterFromSystem();
-                    string qSemester = "SELECT idSemester FROM master.semester WHERE tahunAjaran = @tahunAjaran";
-                    using (SqlCommand cmdSem = new SqlCommand(qSemester, conn, transaction))
-                    {
-                        cmdSem.Parameters.AddWithValue("@tahunAjaran", currentSemesterText);
-                        object result = cmdSem.ExecuteScalar();
-                        if (result == null || result == DBNull.Value)
-                        {
-                            throw new Exception($"Semester Aktif ({currentSemesterText}) belum terdaftar di database! Silakan daftarkan terlebih dahulu di menu Semester.");
-                        }
-                        idSemesterMasuk = Convert.ToInt32(result);
-                    }
-
-                    var cacheMasterBarang = new Dictionary<string, string>();
-
-                    foreach (DataRow row in dtPreviewExcel.Rows)
-                    {
-                        string namaBarang = row["NamaBarang"].ToString().Trim();
-                        if (string.IsNullOrWhiteSpace(namaBarang)) continue;
-
-                        string merk = row["Merk"].ToString().Trim();
-                        int tipeBarang = Convert.ToInt32(row["TipeBarang"]);
-                        string satuan = row["Satuan"].ToString().Trim();
-                        int isiKonversi = string.IsNullOrWhiteSpace(row["IsiKonversi"].ToString()) ? 1 : Convert.ToInt32(row["IsiKonversi"]);
-
-                        int idMerk = GetOrCreateMerk(merk, conn, transaction);
-                        string masterKey = $"{namaBarang}_{idMerk}_{tipeBarang}";
-                        string idBarang = "";
-
-                        if (!cacheMasterBarang.ContainsKey(masterKey))
-                        {
-                            idBarang = GenerateIdBarangOtomatis(merk, tipeBarang, conn, transaction);
-
-                            int stokAwal = 0;
-                            if (tipeBarang == 0)
-                            {
-                                stokAwal = string.IsNullOrWhiteSpace(row["StokHabisPakai"].ToString()) ? 0 : Convert.ToInt32(row["StokHabisPakai"]);
-                            }
-                            else
-                            {
-                                stokAwal = dtPreviewExcel.Select($"NamaBarang = '{namaBarang}' AND Merk = '{merk}'").Length;
-                            }
-
-                            using (var cmdM = new SqlCommand("[master].[sp_ManageBarang]", conn, transaction))
-                            {
-                                cmdM.CommandType = CommandType.StoredProcedure;
-                                cmdM.Parameters.AddWithValue("@Action", "INSERT");
-                                cmdM.Parameters.AddWithValue("@idBarang", idBarang);
-                                cmdM.Parameters.AddWithValue("@namaBarang", namaBarang);
-                                cmdM.Parameters.AddWithValue("@idMerk", idMerk);
-                                cmdM.Parameters.AddWithValue("@stok", stokAwal);
-                                cmdM.Parameters.AddWithValue("@tipeBarang", tipeBarang);
-                                cmdM.Parameters.AddWithValue("@satuan", satuan);
-                                cmdM.Parameters.AddWithValue("@isiKonversi", isiKonversi);
-                                cmdM.ExecuteNonQuery();
-                            }
-                            cacheMasterBarang.Add(masterKey, idBarang);
-                        }
-                        else
-                        {
-                            idBarang = cacheMasterBarang[masterKey];
-                        }
-
-                        if (tipeBarang == 1)
-                        {
-                            string idDetail = row["IDDetailBarang"].ToString().Trim();
-                            string gedung = row["NamaGedung"].ToString().Trim();
-                            string ruangan = row["NamaRuangan"].ToString().Trim();
-                            string spesifikasi = row["Spesifikasi"].ToString().Trim();
-
-                            if (string.IsNullOrWhiteSpace(idDetail) || string.IsNullOrWhiteSpace(ruangan))
-                            {
-                                throw new Exception($"Aset '{namaBarang}' tidak memiliki ID Detail atau Nama Ruangan.");
-                            }
-
-                            int idGedung = GetOrCreateGedung(gedung, conn, transaction);
-                            int idRuangan = GetOrCreateRuangan(ruangan, idGedung, conn, transaction);
-
-                            using (var cmdD = new SqlCommand("[transaction].[sp_InsertDetailBarang]", conn, transaction))
-                            {
-                                cmdD.CommandType = CommandType.StoredProcedure;
-                                cmdD.Parameters.AddWithValue("@idDetailBarang", idDetail);
-                                cmdD.Parameters.AddWithValue("@idBarang", idBarang);
-                                cmdD.Parameters.AddWithValue("@idRuangan", idRuangan);
-                                cmdD.Parameters.AddWithValue("@spesifikasi", spesifikasi);
-                                cmdD.Parameters.AddWithValue("@satuan", satuan);
-                                cmdD.Parameters.AddWithValue("@idSemesterMasuk", idSemesterMasuk);
-                                cmdD.Parameters.AddWithValue("@tglMasuk", DateTime.Now);
-                                cmdD.Parameters.AddWithValue("@statusAset", 1);
-                                cmdD.ExecuteNonQuery();
-                            }
-                        }
-                    }
-
-                    transaction.Commit();
-                    MessageBox.Show("Integritas data berhasil disuntikkan ke Database tanpa celah.", "Eksekusi Sempurna", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    SwitchToPreviewMode(false);
-                }
-                catch (SqlException sqlEx)
-                {
-                    transaction.Rollback();
-                    if (sqlEx.Number == 2627)
-                        MessageBox.Show("Ditemukan ID Detail Barang ganda (Primary Key Collision) pada file Excel. Transaksi ditarik mundur mutlak.", "Fatal Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    else
-                        MessageBox.Show($"Kesalahan Arsitektur SQL: {sqlEx.Message}", "Rollback", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                catch (Exception ex)
-                {
-                    transaction.Rollback();
-                    MessageBox.Show($"Cacat Logika: {ex.Message}\nSeluruh instruksi telah di-Rollback.", "Rollback", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                DAL.ImportDataBarang(dtPreviewExcel);
+                MessageBox.Show("Boom! Semua data sukses masuk ke Master dan Detail sekaligus!", "Import Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                
+                SwitchToPreviewMode(false);
+                LoadDataBarang();
+                ResetForm();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Import dibatalkan karena error: " + ex.Message, "Error Database", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 }

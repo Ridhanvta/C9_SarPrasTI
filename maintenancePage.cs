@@ -1,4 +1,4 @@
-﻿using SatprasDesktopApp.Config;
+using SatprasDesktopApp.Config;
 using System;
 using System.Data;
 using System.Data.SqlClient;
@@ -121,21 +121,12 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-                    string query = "SELECT idKaryawan, namaKaryawan FROM [master].[karyawan]";
-                    using (SqlDataAdapter da = new SqlDataAdapter(query, conn))
-                    {
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
-                        cmbKaryawan.DataSource = dt;
-                        cmbKaryawan.DisplayMember = "namaKaryawan";
-                        cmbKaryawan.ValueMember = "idKaryawan";
-                        cmbKaryawan.DropDownStyle = ComboBoxStyle.DropDownList;
-                        cmbKaryawan.SelectedIndex = -1;
-                    }
-                }
+                DataTable dt = DAL.GetKaryawanData();
+                cmbKaryawan.DataSource = dt;
+                cmbKaryawan.DisplayMember = "namaKaryawan";
+                cmbKaryawan.ValueMember = "idKaryawan";
+                cmbKaryawan.DropDownStyle = ComboBoxStyle.DropDownList;
+                cmbKaryawan.SelectedIndex = -1;
             }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Karyawan", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
@@ -144,27 +135,12 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-                    string query = "SELECT idSemester, tahunAjaran FROM [master].[semester] WHERE tahunAjaran = @active";
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@active", GetActiveSemesterFromSystem());
-
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            DataTable dt = new DataTable();
-                            da.Fill(dt);
-                            cmbSemester.DataSource = dt;
-                            cmbSemester.DisplayMember = "tahunAjaran";
-                            cmbSemester.ValueMember = "idSemester";
-                            cmbSemester.DropDownStyle = ComboBoxStyle.DropDownList;
-                            cmbSemester.SelectedIndex = -1;
-                        }
-                    }
-                }
+                DataTable dt = DAL.GetSemesterAktif(GetActiveSemesterFromSystem());
+                cmbSemester.DataSource = dt;
+                cmbSemester.DisplayMember = "tahunAjaran";
+                cmbSemester.ValueMember = "idSemester";
+                cmbSemester.DropDownStyle = ComboBoxStyle.DropDownList;
+                cmbSemester.SelectedIndex = -1;
             }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Semester", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
@@ -175,33 +151,13 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-                    string query = @"SELECT * FROM [dbo].[vwDetailBarangAsset]";
+                dtBarang = DAL.GetDetailBarangAsset(keyword);
+                bsBarang.DataSource = dtBarang;
+                dataGridView2.DataSource = bsBarang;
+                bindingNavigator1.BindingSource = bsBarang;
 
-                    if (!string.IsNullOrEmpty(keyword))
-                    {
-                        query += " WHERE b.namaBarang LIKE @kw OR db.spesifikasi LIKE @kw OR r.namaRuangan LIKE @kw OR db.idDetailBarang LIKE @kw";
-                    }
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        if (!string.IsNullOrEmpty(keyword)) cmd.Parameters.AddWithValue("@kw", "%" + keyword + "%");
-
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            dtBarang = new DataTable();
-                            da.Fill(dtBarang);
-                            bsBarang.DataSource = dtBarang;
-                            dataGridView2.DataSource = bsBarang;
-                            bindingNavigator1.BindingSource = bsBarang;
-
-                            if (dataGridView2.Columns["idBarang"] != null)
-                                dataGridView2.Columns["idBarang"].Visible = false;
-                        }
-                    }
-                }
+                if (dataGridView2.Columns["idBarang"] != null)
+                    dataGridView2.Columns["idBarang"].Visible = false;
             }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Data Aset", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
@@ -212,34 +168,14 @@ namespace ManajemenSarPras
         {
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
-                    string query = @"SELECT * FROM [dbo].[vwMaintenanceHistory]";
+                dtMaint = DAL.GetMaintenanceHistory(keyword);
+                bsMaintenance.DataSource = dtMaint;
+                dataGridView1.DataSource = bsMaintenance;
 
-                    if (!string.IsNullOrEmpty(keyword))
-                    {
-                        query += " WHERE [Aset] LIKE @kw OR [Petugas] LIKE @kw OR [Lokasi] LIKE @kw";
-                    }
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        if (!string.IsNullOrEmpty(keyword)) cmd.Parameters.AddWithValue("@kw", "%" + keyword + "%");
-
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            dtMaint = new DataTable();
-                            da.Fill(dtMaint);
-                            bsMaintenance.DataSource = dtMaint;
-                            dataGridView1.DataSource = bsMaintenance;
-
-                            if (dataGridView1.Columns["idKaryawan"] != null) dataGridView1.Columns["idKaryawan"].Visible = false;
-                            if (dataGridView1.Columns["idSemester"] != null) dataGridView1.Columns["idSemester"].Visible = false;
-                            if (dataGridView1.Columns["idDetailBarang"] != null) dataGridView1.Columns["idDetailBarang"].Visible = false;
-                            if (dataGridView1.Columns["idBarang"] != null) dataGridView1.Columns["idBarang"].Visible = false;
-                        }
-                    }
-                }
+                if (dataGridView1.Columns["idKaryawan"] != null) dataGridView1.Columns["idKaryawan"].Visible = false;
+                if (dataGridView1.Columns["idSemester"] != null) dataGridView1.Columns["idSemester"].Visible = false;
+                if (dataGridView1.Columns["idDetailBarang"] != null) dataGridView1.Columns["idDetailBarang"].Visible = false;
+                if (dataGridView1.Columns["idBarang"] != null) dataGridView1.Columns["idBarang"].Visible = false;
             }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Error Load Riwayat", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
@@ -355,33 +291,21 @@ namespace ManajemenSarPras
 
             try
             {
-                using (var conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn == null) return;
+                DAL.SimpanMaintenance(
+                    cmbKaryawan.SelectedValue.ToString(),
+                    selectedIdDetailBarang,
+                    selectedIdBarang,
+                    dtpTglCek.Value.Date,
+                    kondisiBaru,
+                    rbBaik.Checked ? "-" : txtKerusakan.Text.Trim(),
+                    tindakLanjutValue,
+                    Convert.ToInt32(cmbSemester.SelectedValue)
+                );
 
-                    // Kodingan murni dipaksa meneruskan parameter NULL pada @idM (Selalu jalanin Insert Baru)
-                    using (SqlCommand cmd = new SqlCommand("[dbo].[sp_SaveMaintenance]", conn))
-                    {
-                        cmd.CommandType = CommandType.StoredProcedure;
+                MessageBox.Show("Log Riwayat Cek Maintenance Berhasil Disimpan Permanen!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                        cmd.Parameters.AddWithValue("@idM", DBNull.Value); // Mutlak selalu INSERT log baru
-                        cmd.Parameters.AddWithValue("@idK", cmbKaryawan.SelectedValue);
-                        cmd.Parameters.AddWithValue("@idD", selectedIdDetailBarang);
-                        cmd.Parameters.AddWithValue("@idB", selectedIdBarang);
-                        cmd.Parameters.AddWithValue("@tgl", dtpTglCek.Value.Date);
-                        cmd.Parameters.AddWithValue("@kon", kondisiBaru);
-                        cmd.Parameters.AddWithValue("@ker", rbBaik.Checked ? "-" : txtKerusakan.Text.Trim());
-                        cmd.Parameters.AddWithValue("@tin", tindakLanjutValue);
-                        cmd.Parameters.AddWithValue("@smt", cmbSemester.SelectedValue);
-
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    MessageBox.Show("Log Riwayat Cek Maintenance Berhasil Disimpan Permanen!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    RefreshSemuaTabel();
-                    ResetForm();
-                }
+                RefreshSemuaTabel();
+                ResetForm();
             }
             catch (SqlException ex)
             {

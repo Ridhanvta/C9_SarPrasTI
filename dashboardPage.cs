@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -7,8 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Data.SqlClient;
-using SatprasDesktopApp.Config; // Ini buat manggil DatabaseConfig kamu
+using SatprasDesktopApp.Config;
 
 namespace ManajemenSarPras
 {
@@ -72,19 +71,14 @@ namespace ManajemenSarPras
         // 7. Test Koneksi Database (Tombol Karyawan yang besar)
         private void button1_Click(object sender, EventArgs e)
         {
-            try
+            string errorMsg;
+            if (DAL.TestConnection(out errorMsg))
             {
-                using (SqlConnection conn = DatabaseConfig.GetConnection())
-                {
-                    if (conn != null && conn.State == ConnectionState.Open)
-                    {
-                        MessageBox.Show("Koneksi ke satprasDB Berhasil!", "Info Koneksi", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                }
+                MessageBox.Show("Koneksi ke satprasDB Berhasil!", "Info Koneksi", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show("Waduh, koneksi gagal: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Waduh, koneksi gagal: " + errorMsg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
