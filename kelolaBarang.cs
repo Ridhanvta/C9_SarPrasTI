@@ -1,6 +1,7 @@
 using ExcelDataReader;
 using SatprasDesktopApp.Config;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
@@ -529,6 +530,28 @@ namespace ManajemenSarPras
             }
         }
 
+        private string GetActiveSemesterFromSystem()
+        {
+            int tahunSekarang = DateTime.Now.Year;
+            int bulanSekarang = DateTime.Now.Month;
+
+            string tipeSemester;
+            string tahunAjaran;
+
+            if (bulanSekarang >= 7)
+            {
+                tipeSemester = "Ganjil";
+                tahunAjaran = $"{tahunSekarang}/{tahunSekarang + 1}";
+            }
+            else
+            {
+                tipeSemester = "Genap";
+                tahunAjaran = $"{tahunSekarang - 1}/{tahunSekarang}";
+            }
+
+            return $"{tahunAjaran} ({tipeSemester})";
+        }
+
         private void btnExcel_Click(object sender, EventArgs e)
         {
             using (OpenFileDialog ofd = new OpenFileDialog() { Filter = "Excel Files|*.xls;*.xlsx" })
@@ -580,6 +603,20 @@ namespace ManajemenSarPras
 
                 try
                 {
+                    int idSemesterMasuk = 0;
+                    string currentSemesterText = GetActiveSemesterFromSystem();
+                    string qSemester = "SELECT idSemester FROM master.semester WHERE tahunAjaran = @tahunAjaran";
+                    using (SqlCommand cmdSem = new SqlCommand(qSemester, conn, transaction))
+                    {
+                        cmdSem.Parameters.AddWithValue("@tahunAjaran", currentSemesterText);
+                        object result = cmdSem.ExecuteScalar();
+                        if (result == null || result == DBNull.Value)
+                        {
+                            throw new Exception($"Semester Aktif ({currentSemesterText}) belum terdaftar di database! Silakan daftarkan terlebih dahulu di menu Semester.");
+                        }
+                        idSemesterMasuk = Convert.ToInt32(result);
+                    }
+
                     var cacheMasterBarang = new Dictionary<string, string>();
 
                     foreach (DataRow row in dtPreviewExcel.Rows)
@@ -644,7 +681,7 @@ namespace ManajemenSarPras
                             int idGedung = GetOrCreateGedung(gedung, conn, transaction);
                             int idRuangan = GetOrCreateRuangan(ruangan, idGedung, conn, transaction);
 
-                            string insertDetailQ = "INSERT INTO [transaction].[detailBarang] (idDetailBarang, idBarang, idRuangan, spesifikasi, satuan) VALUES (@idDetail, @idBarang, @idRuangan, @spek, @satuan)";
+                            string insertDetailQ = "INSERT INTO [transaction].[detailBarang] (idDetailBarang, idBarang, idRuangan, spesifikasi, satuan, idSemesterMasuk, tglMasuk, statusAset) VALUES (@idDetail, @idBarang, @idRuangan, @spek, @satuan, @idSemester, @tglMasuk, @statusAset)";
                             using (var cmdD = new SqlCommand(insertDetailQ, conn, transaction))
                             {
                                 cmdD.Parameters.AddWithValue("@idDetail", idDetail);
@@ -652,6 +689,9 @@ namespace ManajemenSarPras
                                 cmdD.Parameters.AddWithValue("@idRuangan", idRuangan);
                                 cmdD.Parameters.AddWithValue("@spek", spesifikasi);
                                 cmdD.Parameters.AddWithValue("@satuan", satuan);
+                                cmdD.Parameters.AddWithValue("@idSemester", idSemesterMasuk);
+                                cmdD.Parameters.AddWithValue("@tglMasuk", DateTime.Now);
+                                cmdD.Parameters.AddWithValue("@statusAset", 1);
                                 cmdD.ExecuteNonQuery();
                             }
                         }
