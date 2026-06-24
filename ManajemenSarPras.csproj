@@ -208,7 +208,8 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>satprasDBDataSet.xsd</DependentUpon>
     </Compile>
-    <Compile Include="utils\databaseConnection.cs" />
+
+    <Compile Include="utils\DAL.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="cetakDataLog.resx">
