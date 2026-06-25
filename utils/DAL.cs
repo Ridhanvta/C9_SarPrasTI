@@ -240,19 +240,15 @@ namespace SatprasDesktopApp.Config
         // ===============================================
         public static DataTable GetBarangData(string keyword)
         {
-            string query = @"SELECT b.idBarang AS [ID/Kode Barang], b.namaBarang AS [Nama Barang], b.stok AS [Sisa Stok],
-                                    m.namaMerk AS Merk, b.tipeBarang AS tipeBarang,
-                                    b.satuan AS Satuan, b.isiKonversi AS Konversi 
-                             FROM master.barang b 
-                             INNER JOIN master.merk m ON b.idMerk = m.idMerk 
-                             WHERE b.namaBarang LIKE @kw OR m.namaMerk LIKE @kw OR b.idBarang LIKE @kw";
+            string query = @"SELECT * FROM [dbo].[vw_DataBarangMaster] 
+                             WHERE [Nama Barang] LIKE @kw OR Merk LIKE @kw OR [ID/Kode Barang] LIKE @kw";
             SqlParameter[] pars = { new SqlParameter("@kw", "%" + keyword + "%") };
             return ExecuteQuery(query, pars);
         }
 
         public static DataTable GetMerkData()
         {
-            string query = "SELECT idMerk, namaMerk FROM master.merk ORDER BY namaMerk";
+            string query = "SELECT * FROM [dbo].[vw_DataMerk] ORDER BY namaMerk";
             return ExecuteQuery(query);
         }
 
@@ -384,12 +380,12 @@ namespace SatprasDesktopApp.Config
 
         public static DataTable GetComboBoxGedung()
         {
-            return ExecuteQuery("SELECT idGedung, namaGedung FROM master.gedung");
+            return ExecuteQuery("SELECT * FROM [dbo].[vw_DataGedung]");
         }
 
         public static DataTable GetComboBoxRuangan(int idGedung)
         {
-            string query = "SELECT idRuangan, namaRuangan FROM master.ruangan WHERE idGedung = @idGedung";
+            string query = "SELECT idRuangan, namaRuangan FROM [dbo].[vw_DataRuangan] WHERE idGedung = @idGedung";
             SqlParameter[] pars = { new SqlParameter("@idGedung", idGedung) };
             return ExecuteQuery(query, pars);
         }
@@ -851,16 +847,12 @@ namespace SatprasDesktopApp.Config
 
         public static DataTable GetAllSemesters()
         {
-            return ExecuteQuery("SELECT idSemester, tahunAjaran FROM [master].[semester]");
+            return ExecuteQuery("SELECT * FROM [dbo].[vw_SemesterReport]");
         }
 
         public static DataTable GetStokAktualBarang()
         {
-            string query = @"
-                SELECT 
-                    namaBarang, 
-                    stok AS StokAktual
-                FROM [master].[barang]";
+            string query = "SELECT * FROM [dbo].[vw_StokAktualBarang]";
             return ExecuteQuery(query);
         }
         // ===============================================
@@ -869,52 +861,28 @@ namespace SatprasDesktopApp.Config
 
         public static DataTable GetSemesterReportData()
         {
-            return ExecuteQuery("SELECT idSemester, tahunAjaran FROM master.semester");
+            return ExecuteQuery("SELECT * FROM [dbo].[vw_SemesterReport]");
         }
 
         public static DataTable GetProcurementAlertData()
         {
-            string query = @"
-            SELECT namaBarang AS [Nama Barang], stok AS [Sisa Stok], 'SEGERA BELI' AS [Rekomendasi]
-            FROM [master].barang 
-            WHERE tipeBarang = 0 AND stok < 20";
+            string query = "SELECT * FROM [dbo].[vw_ProcurementAlert]";
             return ExecuteQuery(query);
         }
 
         public static DataTable GetReplacementAlertData()
         {
-            string query = @"
-            SELECT 
-                b.namaBarang AS [Nama Asset], 
-                r.namaRuangan AS [Lokasi],
-                COUNT(m.idMaintenance) AS [Total Frekuensi Rusak]
-            FROM [transaction].maintenance m
-            JOIN [transaction].detailBarang db ON m.idDetailBarang = db.idDetailBarang
-            JOIN [master].barang b ON db.idBarang = b.idBarang
-            JOIN [master].ruangan r ON db.idRuangan = r.idRuangan
-            WHERE m.kondisi = 0 -- 0 artinya Rusak
-            GROUP BY b.namaBarang, r.namaRuangan
-            HAVING COUNT(m.idMaintenance) >= 2";
+            string query = "SELECT * FROM [dbo].[vw_ReplacementAlert]";
             return ExecuteQuery(query);
         }
 
         public static DataTable GetLaporanData(string tipe, int idSemester, int angkaBulan)
         {
-            string query = @"
-                SELECT 
-                    pb.tglPermintaan AS [Tanggal Transaksi],
-                    b.namaBarang AS [Nama Barang],
-                    r.namaRuangan AS [Lokasi Ruangan],
-                    pb.namaPeminta AS [Nama Peminta],
-                    pb.jumlah AS [Jumlah Diberikan]
-                FROM [transaction].permintaanBarang pb
-                JOIN [master].barang b ON pb.idBarang = b.idBarang
-                JOIN [master].ruangan r ON pb.idRuangan = r.idRuangan
-                WHERE pb.idSemester = @idSemester";
+            string query = "SELECT [Tanggal Transaksi], [Nama Barang], [Lokasi Ruangan], [Nama Peminta], [Jumlah Diberikan] FROM [dbo].[vw_LaporanPermintaanBarang] WHERE idSemester = @idSemester";
 
             if (tipe.ToLower() == "bulanan" && angkaBulan > 0)
             {
-                query += " AND MONTH(pb.tglPermintaan) = @bulan";
+                query += " AND BulanTransaksi = @bulan";
                 SqlParameter[] pars = { 
                     new SqlParameter("@idSemester", idSemester),
                     new SqlParameter("@bulan", angkaBulan)
@@ -930,25 +898,11 @@ namespace SatprasDesktopApp.Config
 
         public static DataTable GetMaintenanceData(string tipe, int idSemester, int angkaBulan)
         {
-            string query = @"
-                SELECT 
-                    m.tglCek AS [Tanggal Pengecekan],
-                    b.namaBarang AS [Nama Aset],
-                    r.namaRuangan AS [Lokasi],
-                    k.namaKaryawan AS [Petugas],
-                    CASE WHEN m.kondisi = 1 THEN 'BAIK' ELSE 'RUSAK' END AS [Kondisi Akhir],
-                    ISNULL(m.kerusakan, '-') AS [Detail Kerusakan],
-                    ISNULL(m.tindakLanjut, '-') AS [Tindak Lanjut]
-                FROM [transaction].maintenance m
-                JOIN [transaction].detailBarang db ON m.idDetailBarang = db.idDetailBarang
-                JOIN [master].barang b ON db.idBarang = b.idBarang
-                JOIN [master].ruangan r ON db.idRuangan = r.idRuangan
-                JOIN [master].karyawan k ON m.idKaryawan = k.idKaryawan
-                WHERE m.idSemester = @idSemester";
+            string query = "SELECT [Tanggal Pengecekan], [Nama Aset], [Lokasi], [Petugas], [Kondisi Akhir], [Detail Kerusakan], [Tindak Lanjut] FROM [dbo].[vw_LaporanMaintenance] WHERE idSemester = @idSemester";
 
             if (tipe.ToLower() == "bulanan" && angkaBulan > 0)
             {
-                query += " AND MONTH(m.tglCek) = @bulan";
+                query += " AND BulanTransaksi = @bulan";
                 SqlParameter[] pars = { 
                     new SqlParameter("@idSemester", idSemester),
                     new SqlParameter("@bulan", angkaBulan)
@@ -963,28 +917,17 @@ namespace SatprasDesktopApp.Config
         }
         public static DataTable GetReportStokData(int? idSemesterFilter)
         {
-            string query = @"
-                SELECT DISTINCT 
-                    b.namaBarang AS [Nama Barang],
-                    b.stok AS [Jumlah Saat Ini],
-                    CASE 
-                        WHEN b.tipeBarang = 0 THEN 'Barang Habis Pakai'
-                        WHEN b.tipeBarang = 1 THEN 'Aset Tetap'
-                        ELSE 'Tidak Diketahui'
-                    END AS [Jenis Barang],
-                    b.satuan AS [Satuan]
-                FROM [master].[barang] b
-                LEFT JOIN [master].[merk] m ON b.idMerk = m.idMerk ";
-
             if (idSemesterFilter.HasValue)
             {
-                query += @"
-                INNER JOIN [transaction].[permintaanBarang] p ON b.idBarang = p.idBarang
+                string query = @"
+                SELECT DISTINCT v.[Nama Barang], v.[Jumlah Saat Ini], v.[Jenis Barang], v.[Satuan] 
+                FROM [dbo].[vw_LaporanStok] v
+                INNER JOIN [transaction].[permintaanBarang] p ON v.idBarang = p.idBarang
                 WHERE p.idSemester = @idSemester";
                 SqlParameter[] pars = { new SqlParameter("@idSemester", idSemesterFilter.Value) };
                 return ExecuteQuery(query, pars);
             }
-            return ExecuteQuery(query);
+            return ExecuteQuery("SELECT [Nama Barang], [Jumlah Saat Ini], [Jenis Barang], [Satuan] FROM [dbo].[vw_LaporanStok]");
         }
         public static DataTable GetReportEvaluasiData(int? idSemester)
         {

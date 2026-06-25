@@ -1,4 +1,4 @@
-﻿namespace ManajemenSarPras
+namespace ManajemenSarPras
 {
     partial class dashboardPage
     {
@@ -160,6 +160,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1014, 562);
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Controls.Add(this.btnReportLog);
             this.Controls.Add(this.btnReportStok);
             this.Controls.Add(this.btnGrafik);

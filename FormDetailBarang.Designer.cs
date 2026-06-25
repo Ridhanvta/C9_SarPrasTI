@@ -70,6 +70,9 @@ namespace ManajemenSarPras
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvDetail.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvDetail.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvDetail.Location = new System.Drawing.Point(337, 136);
             this.dgvDetail.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.dgvDetail.Name = "dgvDetail";
@@ -170,6 +173,7 @@ namespace ManajemenSarPras
             // txtCari
             // 
             this.txtCari.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtCari.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtCari.Location = new System.Drawing.Point(439, 92);
             this.txtCari.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtCari.Name = "txtCari";
@@ -181,6 +185,7 @@ namespace ManajemenSarPras
             // 
             this.labelCariDetailBarang.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.labelCariDetailBarang.AutoSize = true;
+            this.labelCariDetailBarang.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.labelCariDetailBarang.Location = new System.Drawing.Point(338, 94);
             this.labelCariDetailBarang.Margin = new System.Windows.Forms.Padding(3, 0, 0, 0);
             this.labelCariDetailBarang.Name = "labelCariDetailBarang";
@@ -334,6 +339,7 @@ namespace ManajemenSarPras
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(835, 560);
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Controls.Add(this.bindingNavigator1);
             this.Controls.Add(this.txtJumlahInput);
             this.Controls.Add(this.label5);

@@ -1,4 +1,4 @@
-﻿namespace ManajemenSarPras
+namespace ManajemenSarPras
 {
     partial class kelolaBarang
     {
@@ -84,6 +84,9 @@
             this.dataGridView1.AllowUserToAddRows = false;
             this.dataGridView1.AllowUserToDeleteRows = false;
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView1.Location = new System.Drawing.Point(279, 99);
             this.dataGridView1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.dataGridView1.Name = "dataGridView1";
@@ -205,6 +208,7 @@
             // labelCariBarang
             // 
             this.labelCariBarang.AutoSize = true;
+            this.labelCariBarang.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.labelCariBarang.Location = new System.Drawing.Point(277, 67);
             this.labelCariBarang.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.labelCariBarang.Name = "labelCariBarang";
@@ -214,6 +218,7 @@
             // 
             // txtCari
             // 
+            this.txtCari.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtCari.Location = new System.Drawing.Point(362, 65);
             this.txtCari.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.txtCari.Name = "txtCari";
@@ -398,6 +403,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(627, 444);
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Controls.Add(this.bindingNavigator1);
             this.Controls.Add(this.cmbKuantitas);
             this.Controls.Add(this.label4);
