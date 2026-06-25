@@ -9,19 +9,130 @@ namespace SatprasDesktopApp.Config
     public static class DAL
     {
         // 1. URUSAN KONEKSI (Connection Management)
-        private static readonly string connectionString = ConfigurationManager.ConnectionStrings["SatprasDbConnection"].ConnectionString;
+        
+        public static string GetLocalIPAddress()
+        {
+            var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            return "localhost"; // Fallback jika tidak ditemukan IP v4
+        }
+
+        private static string PromptForServerIP()
+        {
+            string newIp = "";
+            using (Form prompt = new Form())
+            {
+                prompt.Width = 400;
+                prompt.Height = 220;
+                prompt.FormBorderStyle = FormBorderStyle.FixedDialog;
+                prompt.Text = "Koneksi Database Gagal";
+                prompt.StartPosition = FormStartPosition.CenterScreen;
+                prompt.MaximizeBox = false;
+
+                Label textLabel = new Label() { Left = 20, Top = 20, Width = 350, Height = 40, Text = "Gagal terhubung ke Database.\nSilakan masukkan IP Address Laptop Server:" };
+                TextBox inputBox = new TextBox() { Left = 20, Top = 70, Width = 340 };
+                Button confirmation = new Button() { Text = "Simpan & Konek", Left = 260, Width = 100, Top = 120, DialogResult = DialogResult.OK };
+                
+                confirmation.Click += (sender, e) => { prompt.Close(); };
+                
+                prompt.Controls.Add(textLabel);
+                prompt.Controls.Add(inputBox);
+                prompt.Controls.Add(confirmation);
+                prompt.AcceptButton = confirmation;
+
+                if (prompt.ShowDialog() == DialogResult.OK)
+                {
+                    newIp = inputBox.Text.Trim();
+                }
+            }
+            return newIp;
+        }
+
+        private static string GetStoredIP()
+        {
+            string path = System.IO.Path.Combine(Application.UserAppDataPath, "server_ip.txt");
+            if (System.IO.File.Exists(path))
+            {
+                return System.IO.File.ReadAllText(path).Trim();
+            }
+            return GetLocalIPAddress(); // Default ke laptop sendiri
+        }
+
+        private static void SaveStoredIP(string ipAddress)
+        {
+            string path = System.IO.Path.Combine(Application.UserAppDataPath, "server_ip.txt");
+            System.IO.File.WriteAllText(path, ipAddress);
+        }
+
+        public static string GetDynamicConnectionString(string ipAddress, int timeout = 15)
+        {
+            // Tidak menggunakan App.config sama sekali.
+            if (ipAddress == "localhost" || ipAddress == "127.0.0.1" || ipAddress == ".")
+            {
+                // Koneksi Lokal (Laptop Server): Gunakan Windows Authentication & Shared Memory (sangat stabil)
+                return $"Server=.\\SQLEXPRESS;Database=satprasDB_new;Trusted_Connection=True;Connection Timeout={timeout};";
+            }
+            else
+            {
+                // Koneksi Jaringan (Laptop Client / UTM Mac): 
+                // Wajib menggunakan SQL Server Authentication agar terbebas dari penolakan Windows Authentication beda mesin.
+                // Gunakan format IP,1433 untuk memotong keharusan adanya SQL Browser.
+                return $"Server={ipAddress},1433;Database=satprasDB_new;User Id=client_sarpras;Password=Client123!;Connection Timeout={timeout};";
+            }
+        }
 
         public static SqlConnection GetConnection()
         {
-            SqlConnection conn = new SqlConnection(connectionString);
+            // 1. Coba konek ke titik (.) (Laptop Server) terlebih dahulu via Shared Memory.
+            // Jika berhasil, berarti aplikasi sedang dijalankan di laptop pembuatnya.
             try
             {
+                string localConnString = GetDynamicConnectionString(".", 3);
+                SqlConnection localConn = new SqlConnection(localConnString);
+                localConn.Open();
+                return localConn;
+            }
+            catch
+            {
+                // Gagal konek ke localhost. Berarti ini kemungkinan dijalankan di laptop Klien (teman Anda).
+            }
+
+            // 2. Baca IP yang tersimpan untuk Klien
+            string currentIp = GetStoredIP();
+            
+            try
+            {
+                string connString = GetDynamicConnectionString(currentIp);
+                SqlConnection conn = new SqlConnection(connString);
                 conn.Open();
                 return conn;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MessageBox.Show("Fatal Error: Gagal terhubung ke Database satprasDB.\n" + ex.Message, "Koneksi Terputus", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Jika gagal juga, munculkan form pop-up untuk meminta IP Server
+                string newIp = PromptForServerIP();
+                if (!string.IsNullOrEmpty(newIp))
+                {
+                    SaveStoredIP(newIp);
+                    try
+                    {
+                        string newConnString = GetDynamicConnectionString(newIp);
+                        SqlConnection newConn = new SqlConnection(newConnString);
+                        newConn.Open();
+                        return newConn;
+                    }
+                    catch (Exception ex2)
+                    {
+                        MessageBox.Show("Masih gagal terhubung ke " + newIp + ".\nPastikan Firewall Server mengizinkan Port 1433 dan SQL Service menyala.\n\nDetail: " + ex2.Message, "Koneksi Terputus", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return null;
+                    }
+                }
                 return null;
             }
         }
@@ -129,9 +240,9 @@ namespace SatprasDesktopApp.Config
         // ===============================================
         public static DataTable GetBarangData(string keyword)
         {
-            string query = @"SELECT b.idBarang AS ID, b.namaBarang AS NamaBarang, b.stok AS Stok,
-                                    m.namaMerk AS Merk, b.tipeBarang AS TipeBarang,
-                                    b.satuan AS SatuanUtama, b.isiKonversi AS Konversi 
+            string query = @"SELECT b.idBarang AS [ID/Kode Barang], b.namaBarang AS [Nama Barang], b.stok AS [Sisa Stok],
+                                    m.namaMerk AS Merk, b.tipeBarang AS tipeBarang,
+                                    b.satuan AS Satuan, b.isiKonversi AS Konversi 
                              FROM master.barang b 
                              INNER JOIN master.merk m ON b.idMerk = m.idMerk 
                              WHERE b.namaBarang LIKE @kw OR m.namaMerk LIKE @kw OR b.idBarang LIKE @kw";
